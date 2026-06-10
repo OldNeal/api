@@ -1,0 +1,9 @@
+alembic
+sqlalchemy
+pydantic
+pydantic-settings
+asyncpg
+python-decouple
+pytest
+fastapi
+
