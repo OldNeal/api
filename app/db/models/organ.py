@@ -4,10 +4,10 @@ from app.db.base import Base
 from datetime import datetime
 
 class OrganDB(Base):
-    name: Mapped[str] = mapped_column(String(50), unique=True)
-    owner: Mapped[int] = mapped_column(ForeignKey('UserDB.id'))
-    organ: Mapped['OrganPermissionDB'] = relationship('OrganPermissionDB', uselist=False, lazy='joined')
-    name_ranks: Mapped[dict[int, str]] = mapped_column(JSON, default={
+    name: Mapped[str] = mapped_column(String(50))
+    description: Mapped[str | None] = mapped_column(default=None)
+    permission: Mapped['OrganPermissionDB'] = relationship('OrganPermissionDB', uselist=False, lazy='select')
+    rank_names: Mapped[dict[int, str]] = mapped_column(JSON, default={
         9:'Новичок',
         8:'Участник',
         7:'Участник',
@@ -21,13 +21,13 @@ class OrganDB(Base):
     })
 
 class OrganPermissionDB(Base):
-    organ: Mapped[int] = mapped_column(ForeignKey('OrganDB.id'))
+    organ_id: Mapped[int] = mapped_column(ForeignKey('OrganDB.id'))
 
 class MemberDB(Base):
-    tg_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('UserDB.id'))
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('UserDB.id'))
     titul: Mapped[str | None] = mapped_column(String(30))
     organ_id: Mapped[int] = mapped_column(ForeignKey('OrganDB.id'))
-    organ: Mapped[OrganDB] = relationship('OrganDB', uselist=False, lazy='joined')
+    organ: Mapped[OrganDB] = relationship('OrganDB', uselist=False, lazy='joined', cascade='all')
     rank: Mapped[int] = mapped_column(default=9)
     
     

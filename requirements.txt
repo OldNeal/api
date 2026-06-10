@@ -6,4 +6,4 @@ asyncpg
 python-decouple
 pytest
 fastapi
-
+uvicorn

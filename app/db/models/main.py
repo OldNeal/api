@@ -6,24 +6,24 @@ from app.db.models.organ import MemberDB
 
 class TgUserDB(Base):
     tg_id: Mapped[int] = mapped_column(BigInteger, unique=True)
-    fullname: Mapped[str]
+    fullname: Mapped[str | None] = mapped_column(default=None)
     username: Mapped[str | None] = mapped_column(default=None)
-    data: Mapped[dict] = mapped_column(JSON)
+    data: Mapped[dict | None] = mapped_column(JSON, default=None)
 
 class TgChatDB(Base):
     tg_id: Mapped[int] = mapped_column(BigInteger, unique=True)
     type: Mapped[str]
     fullname: Mapped[str]
     username: Mapped[str | None] = mapped_column(default=None)
-    data: Mapped[dict] = mapped_column(JSON)
+    data: Mapped[dict | None] = mapped_column(JSON, default=None)
 
 class UserDB(Base):
     tg_id: Mapped[int | None] = mapped_column(BigInteger, unique=True, default=None)
     _name: Mapped[str | None] = mapped_column(name='name', default=None)
     is_ban: Mapped[bool] = mapped_column(default=False)
-    tg_user: Mapped[TgUserDB] = relationship(TgUserDB, uselist=False, lazy='joined', primaryjoin="foreign(TgUserDB.tg_id) == UserDB.tg_id")
-    beyonder: Mapped[BeyonderDB] = relationship('BeyonderDB', uselist=False, lazy='joined')
-    member: Mapped[MemberDB] = relationship('MemberDB', uselist=False, lazy='joined')
+    tg_user: Mapped[TgUserDB] = relationship(TgUserDB, uselist=False, lazy='joined', primaryjoin="foreign(TgUserDB.tg_id) == UserDB.tg_id", cascade='all')
+    beyonder: Mapped[BeyonderDB | None] = relationship('BeyonderDB', uselist=False, lazy='joined', cascade='all')
+    member: Mapped[MemberDB | None] = relationship('MemberDB', uselist=False, lazy='joined', cascade='all')
 
     @property
     def name(self):

@@ -11,6 +11,8 @@ class Settings:
     DB_HOST = os.getenv('DB_HOST')
     DB_PORT = os.getenv('DB_PORT')
     DB_NAME = os.getenv('DB_NAME')  
+    TITLE = 'Old Neal Api'
+    VERSION = '0.1'
 
     def get_db_url(self):
         return (f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@"
