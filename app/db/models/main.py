@@ -22,8 +22,8 @@ class UserDB(Base):
     _name: Mapped[str | None] = mapped_column(name='name', default=None)
     is_ban: Mapped[bool] = mapped_column(default=False)
     tg_user: Mapped[TgUserDB] = relationship(TgUserDB, uselist=False, lazy='joined', primaryjoin="foreign(TgUserDB.tg_id) == UserDB.tg_id", cascade='all')
-    beyonder: Mapped[BeyonderDB | None] = relationship('BeyonderDB', uselist=False, lazy='joined', cascade='all')
-    member: Mapped[MemberDB | None] = relationship('MemberDB', uselist=False, lazy='joined', cascade='all')
+    beyonder: Mapped[BeyonderDB | None] = relationship('BeyonderDB', uselist=False, lazy='joined', cascade='all, delete-orphan')
+    member: Mapped[MemberDB | None] = relationship('MemberDB', uselist=False, lazy='joined', cascade='all, delete-orphan')
 
     @property
     def name(self):

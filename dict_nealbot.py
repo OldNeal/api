@@ -1480,7 +1480,7 @@ ga_path = {
     'сын хаоса':[1, chaos_mist],
     'богиня судьбы':[1, eternal_edict],
     'высокоразмерный наблюдатель':[1, sublunary_eye,],
-    'вечный голод':[1, tail_devourer],
+    'изначальный голод':[1, tail_devourer],
     'доминатор сверхновой':[1, condenser],
     'неугасимый бред':[1, everlasting],
     'монарх распада':[1, secon_law],
@@ -1495,6 +1495,12 @@ ga_path = {
     'великий джа':[1, first_sprot_path],
     'последняя воля':[1, freedoom_path],
     'искра творения':[1, stranger_path],
+}
+
+groups = {
+    'земные': [g[0] for g in list(ga_path.items())[:9]],
+    'внешние':[g[0] for g in list(ga_path.items())[9:19]],
+    'парадей':[g[0] for g in list(ga_path.items())[19:]],
 }
 
 def path_names(ga: bool = False):
@@ -1516,7 +1522,7 @@ def path_names(ga: bool = False):
     return return_dict
 
 if __name__ == '__main__':           
-    print(path_names())
+    print(groups)
         
 
 seq_time = {

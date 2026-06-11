@@ -13,9 +13,16 @@ class Settings:
     DB_NAME = os.getenv('DB_NAME')  
     TITLE = 'Old Neal Api'
     VERSION = '0.1'
+    
+    ADMIN_TG_IDS = [int(id) for id in os.getenv('ADMIN_TG_IDS').split(',')]  
 
     def get_db_url(self):
         return (f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@"
                 f"{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}")
+    
+    @property
+    def admins(self):
+        return self.ADMIN_TG_IDS
 
 settings = Settings()
+admins = settings.admins

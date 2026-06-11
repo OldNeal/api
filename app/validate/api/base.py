@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from app.db.models.main import UserDB
+from datetime import datetime
 
 class BaseAPIValidate(BaseModel):
     model_config = ConfigDict(from_attributes=True, arbitrary_types_allowed=True)
@@ -7,7 +8,13 @@ class BaseAPIValidate(BaseModel):
 class QueryBody(BaseAPIValidate):
     tg_id: int
 
-class QueryInfo(QueryBody):
+class AnswerBody(BaseAPIValidate):
+    pass
+
+class AnswerUserBody(AnswerBody):
+    tg_id: int
+
+class AnswerBaseInfo(AnswerUserBody):
     name: str | None = None
     username: str | None = None
 

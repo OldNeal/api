@@ -20,15 +20,17 @@ class PathDB(Base):
 
 class GreatAncientDB(Base):
     name: Mapped[str]
+    group: Mapped[str | None] = mapped_column(nullable=True)
     paths: Mapped[list['PathDB']] = relationship('PathDB', uselist=True, lazy='select', back_populates='ga', cascade='all')
 
 class BeyonderDB(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('UserDB.id'))
-    seq_id: Mapped[int] = mapped_column(ForeignKey('SequenceDB.id'), nullable=True)
+    seq_id: Mapped[int | None] = mapped_column(ForeignKey('SequenceDB.id'), nullable=True)
     seq: Mapped[SequenceDB] = relationship('SequenceDB', uselist=False, lazy='joined')
-    ga_id: Mapped[int] = mapped_column(ForeignKey('GreatAncientDB.id'), nullable=True)
+    ga_id: Mapped[int | None] = mapped_column(ForeignKey('GreatAncientDB.id'), nullable=True)
     ga: Mapped[GreatAncientDB] = relationship('GreatAncientDB', uselist=False, lazy='select')
-    upseq_data: Mapped[datetime | None]
+    last_upseq: Mapped[datetime | None]
+    next_upseq: Mapped[datetime | None]
     is_die: Mapped[bool] = mapped_column(default=False)
     
     @property
@@ -38,3 +40,7 @@ class BeyonderDB(Base):
     @property
     def seq_name(self):
         return self.ga.name if self.ga_id else self.seq.name
+
+    @property
+    def upseq_days(self):
+        return  (datetime.now().date() - self.next_upseq.date()).days

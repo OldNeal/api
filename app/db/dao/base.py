@@ -1,7 +1,8 @@
 from typing import Generic, TypeVar
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete, func
+from sqlalchemy import select, update, delete, func, join, or_, all_, and_, any_
+from sqlalchemy.orm import selectinload, joinedload
 from app.db.base import Base
 from datetime import datetime, date
 
@@ -9,6 +10,7 @@ T = TypeVar("T", bound=Base)
 
 class BaseDAO(Generic[T]):
     model: type[T] = Base# Устанавливается в дочернем классе
+    load: list = None
 
     def __init__(self, session: AsyncSession):
         super().__init__()
@@ -18,6 +20,8 @@ class BaseDAO(Generic[T]):
         # Найти запись по ID
         try:
             query = select(self.model).filter_by(id=data_id)
+            if self.load and len(self.load) > 0:
+                query = query.options(*[selectinload(l) for l in self.load])
             result = await self.session.execute(query)
             record = result.scalar_one_or_none()
             return record
@@ -28,26 +32,30 @@ class BaseDAO(Generic[T]):
         # Найти одну запись по фильтрам
         try:
             query = select(self.model).filter_by(**filters)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalar_one_or_none()
             return record
         except SQLAlchemyError as e:
             raise
 
-    async def select_for_ids(self, ids: list[int],                        
-                            ):
+    async def select_for_ids(self, ids: list[int]):
         try:
             query = select(self.model).where(self.model.id.in_(ids))
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalars().all()
             return record
         except SQLAlchemyError as e:
             raise        
 
-    async def find_for_date(self, date: date                         
-                            ):
+    async def find_for_date(self, date: date):
         try:
             query = select(self.model).filter(func.date(self.model.created_at) == date)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalars().all()
             return record
@@ -60,6 +68,8 @@ class BaseDAO(Generic[T]):
 
         try:
             query = select(self.model).filter_by(**filter_dict).order_by(**order_dict)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             records = result.scalars().all()
             return records
@@ -143,7 +153,7 @@ class BaseDAO(Generic[T]):
         except SQLAlchemyError as e:
             raise          
 
-    async def update_many(self, filters: dict, values: dict):
+    async def update_many(self, filters: dict, values: dict) -> int:
         try:
             stmt = (
                 update(self.model)
@@ -156,7 +166,7 @@ class BaseDAO(Generic[T]):
         except SQLAlchemyError as e:
             raise e
 
-    async def update_many_for_ids(self, ids: list[int], values: dict):
+    async def update_many_for_ids(self, ids: list[int], values: dict) -> int:
         try:
             stmt = update(self.model).where(self.model.id.in_(ids)).values(**values)
             result = await self.session.execute(stmt)
@@ -176,7 +186,7 @@ class BaseDAO(Generic[T]):
         except SQLAlchemyError as e:
             raise
 
-    async def delete_many(self, filters: dict | None = None):
+    async def delete_many(self, filters: dict | None = None) -> int:
         if filters:
             stmt = delete(self.model).filter_by(**filters)
         else:
@@ -188,7 +198,7 @@ class BaseDAO(Generic[T]):
         except SQLAlchemyError as e:
             raise
 
-    async def delete_many_for_ids(self, ids: list[int]):
+    async def delete_many_for_ids(self, ids: list[int]) -> int:
         stmt = delete(self.model).where(self.model.id.in_(ids))
         try:
             result = await self.session.execute(stmt)
@@ -208,3 +218,7 @@ class BaseDAO(Generic[T]):
         
     async def rollback(self):
         await self.session.rollback()  
+
+    async def query_by_id(self, data_id: int):
+        return await self.find_one_or_none_by_id(data_id)
+    
