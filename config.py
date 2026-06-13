@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import os
 from pathlib import Path
+from fastapi.routing import APIRoute
 
 # Загружаем .env из корня проекта
 load_dotenv(Path(__file__).parent / '.env')
@@ -26,3 +27,8 @@ class Settings:
 
 settings = Settings()
 admins = settings.admins
+
+def use_route_names_as_operation_ids(app) -> None:
+    for route in app.routes:
+        if isinstance(route, APIRoute):
+            route.operation_id = route.name

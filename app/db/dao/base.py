@@ -46,8 +46,8 @@ class BaseDAO(Generic[T]):
             if self.load and len(self.load) > 0:
                 query = query.options(*self.load)
             result = await self.session.execute(query)
-            record = result.scalars().all()
-            return record
+            records = result.scalars().all()
+            return list(records)
         except SQLAlchemyError as e:
             raise        
 
@@ -57,8 +57,8 @@ class BaseDAO(Generic[T]):
             if self.load and len(self.load) > 0:
                 query = query.options(*self.load)
             result = await self.session.execute(query)
-            record = result.scalars().all()
-            return record
+            records = result.scalars().all()
+            return list(records)
         except SQLAlchemyError as e:
             raise       
 
@@ -72,7 +72,7 @@ class BaseDAO(Generic[T]):
                 query = query.options(*self.load)
             result = await self.session.execute(query)
             records = result.scalars().all()
-            return records
+            return list(records)
         except SQLAlchemyError as e:
             raise
 
@@ -206,18 +206,6 @@ class BaseDAO(Generic[T]):
             return result.rowcount
         except SQLAlchemyError as e:
             raise
-
-    async def flush(self):
-        await self.session.flush()  
-
-    async def commit(self):
-        await self.session.commit()    
-
-    async def close(self):
-        await self.session.close()        
-        
-    async def rollback(self):
-        await self.session.rollback()  
 
     async def query_by_id(self, data_id: int):
         return await self.find_one_or_none_by_id(data_id)

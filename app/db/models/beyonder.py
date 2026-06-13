@@ -16,12 +16,20 @@ class PathDB(Base):
 
     @property
     def sequences(self):
-        return {s.number:s for s in self.sequence_datas}
+        return {s.number:s for s in self.sequence_datas} | {-1:self.ga}
+
+    @property
+    def name(self):
+        return self.sequences.get(0).name
 
 class GreatAncientDB(Base):
     name: Mapped[str]
-    group: Mapped[str | None] = mapped_column(nullable=True)
+    group: Mapped[str]
     paths: Mapped[list['PathDB']] = relationship('PathDB', uselist=True, lazy='select', back_populates='ga', cascade='all')
+
+    @property
+    def number(self):
+        return -1
 
 class BeyonderDB(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('UserDB.id'))
@@ -43,4 +51,9 @@ class BeyonderDB(Base):
 
     @property
     def upseq_days(self):
-        return  (datetime.now().date() - self.next_upseq.date()).days
+        return (self.next_upseq.date() - datetime.now().date()).days if self.next_upseq else None
+
+    @property
+    def path_name(self):
+        return self.seq.path.sequences.get(0).name
+

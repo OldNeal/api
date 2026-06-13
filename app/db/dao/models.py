@@ -99,6 +99,16 @@ class GreatAncientDAO(BaseDAO[GreatAncientDB]):
         except SQLAlchemyError as e:
             raise
 
+    async def gropus(self):
+        try:
+            query = select(self.model.group)
+            result = await self.session.execute(query)
+            record = result.scalars().all()
+            return list(set(record))
+        except SQLAlchemyError as e:
+            raise
+
+
 class OrganDAO(BaseDAO[OrganDB]):
     model = OrganDB
 
@@ -135,3 +145,15 @@ class DAO:
         user = await self.user.query_by_tg_id(tg_id)
         return
     
+
+    async def flush(self):
+        await self.session.flush()  
+
+    async def commit(self):
+        await self.session.commit()    
+
+    async def close(self):
+        await self.session.close()        
+        
+    async def rollback(self):
+        await self.session.rollback()  
