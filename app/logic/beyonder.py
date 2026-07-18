@@ -33,7 +33,7 @@ class BeyonderLogic(BaseLogic):
 
     async def info(self):
         user = await self.get_user(is_raise_not_beyonder=True)
-        return AnswerTimeInfo(tg_id=self.purpose_tg_id, next_upseq=user.beyonder.next_upseq, last_upseq=user.beyonder.last_upseq, upseq_days=user.beyonder.upseq_days)
+        return AnswerTimeInfo(user=await self.query_body(), next_upseq=user.beyonder.next_upseq, last_upseq=user.beyonder.last_upseq, upseq_days=user.beyonder.upseq_days)
     
     async def drink(self, path_name: str, seq: int = 9):
         if seq < 9:
@@ -41,7 +41,7 @@ class BeyonderLogic(BaseLogic):
         self.check_exist_seq(seq)
         user = await self.get_user(self.purpose_tg_id)
         if user.beyonder:
-            raise ALreadyBeyonderException(path_name=user.beyonder.path_name, purpose_tg_id=self.purpose_tg_id)
+            raise ALreadyBeyonderException(path_name=user.beyonder.path_name, purpose_user=await self.query_body())
         if path_name == None:
             raise PathDontEnterException()
         path = await self.dao.path.query_by_name(path_name)
@@ -61,7 +61,7 @@ class BeyonderLogic(BaseLogic):
         bndr = await self.dao.beyonder.add(new_bndr)
         user.beyonder = bndr
         await self.dao.flush()
-        return AnswerRedactSeq(tg_id=self.purpose_tg_id, 
+        return AnswerRedactSeq(user=await self.query_body(), 
                            new=Data(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name),
                            operation='add')
   
@@ -91,7 +91,7 @@ class BeyonderLogic(BaseLogic):
             user.beyonder.seq = new_seq
         user.beyonder.next_upseq = self.get_upseq_time(user.beyonder.seq_number)
         await self.dao.flush()
-        return AnswerRedactSeq(tg_id=self.purpose_tg_id, 
+        return AnswerRedactSeq(user=await self.query_body(), 
                            new=Data(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name),
                            old=Data(seq=old_seq, number=old_number, path=old_path),
                            operation='up')
@@ -117,7 +117,7 @@ class BeyonderLogic(BaseLogic):
             user.beyonder.ga = None
         user.beyonder.next_upseq = self.get_upseq_time(user.beyonder.seq_number)
         await self.dao.flush()
-        return AnswerRedactSeq(tg_id=self.purpose_tg_id, 
+        return AnswerRedactSeq(user=await self.query_body(), 
                            new=(Data(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name) if user.beyonder else None),
                            old=Data(seq=old_seq, number=old_number, path=old_path),
                            operation='down')   
@@ -128,7 +128,7 @@ class BeyonderLogic(BaseLogic):
         old_time = user.beyonder.next_upseq
         user.beyonder.next_upseq = new_time
         await self.dao.flush()
-        return AnswerTimeReplace(tg_id=self.purpose_tg_id,old_time=old_time, new_time=user.beyonder.next_upseq)
+        return AnswerTimeReplace(user=await self.query_body(),old_time=old_time, new_time=user.beyonder.next_upseq)
  
     async def edit_time(self, delta: timedelta, operator: str):
         self.check_permission()
@@ -140,7 +140,7 @@ class BeyonderLogic(BaseLogic):
             case '+':
                 user.beyonder.next_upseq += delta
         await self.dao.flush()
-        return AnswerTimeRedact(tg_id=self.purpose_tg_id,old_time=old_time, new_time=user.beyonder.next_upseq, seconds=delta.total_seconds(), operator=operator)
+        return AnswerTimeRedact(user=await self.query_body(),old_time=old_time, new_time=user.beyonder.next_upseq, seconds=delta.total_seconds(), operator=operator)
 
     async def kill(self):
         if self.purpose_tg_id:
@@ -148,4 +148,4 @@ class BeyonderLogic(BaseLogic):
         user = await self.get_user(self.purpose_tg_id, is_raise_not_beyonder=True)
         user.beyonder = None
         await self.dao.flush()
-        return True
+        return self.return_query_body(user)

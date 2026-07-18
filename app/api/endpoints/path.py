@@ -4,6 +4,7 @@ from app.validate.api.path import (
                                    AnswerGAFullInfo, 
                                    AnswerGroupInfo, 
                                    AnswerPathFullInfo, 
+                                   AnswerSeqFullInfo,
                                    AnswerGASearchInfo, 
                                    AnswerPathSearchInfo, 
                                    AnswerSeqSearchInfo,
@@ -54,21 +55,33 @@ async def search_ga(
 
 @seq_router.get('/all', response_model=AnswerAllSeqInfo)
 async def get_seqs(session = Depends(get_session())):
+    """
+    Возвращает список всех Последовательностей
+    """
     data = await PathService(session).seqs()
     return AnswerAllSeqInfo.to_query(data)
 
 @path_router.get('/all', response_model=AnswerAllPathInfo)
 async def get_paths(session = Depends(get_session())):
+    """
+    Возвращает список всех Путей
+    """
     data = await PathService(session).paths()
-    return AnswerPathFullInfo.to_query(data)
+    return AnswerAllPathInfo.to_query(data)
 
 @ga_router.get('/all', response_model=AnswerAllGAInfo)
 async def get_gas(session = Depends(get_session())):
+    """
+    Возвращает список всех Великих Древних
+    """
     data = await PathService(session).gas()
-    return AnswerGAFullInfo.to_query(data)
+    return AnswerAllGAInfo.to_query(data)
 
 @group_router.get('/all', response_model=AnswerAllGroupInfo)
 async def get_groups(session = Depends(get_session())):
+    """
+    Возвращает все группы Путей
+    """
     data = await PathService(session).groups()
     return AnswerAllGroupInfo(groups=data)
 
@@ -76,6 +89,16 @@ async def get_groups(session = Depends(get_session())):
 
 
 
+
+
+@seq_router.get('', response_model=AnswerSeqFullInfo)
+async def get_seq(
+                          name: str = Query(None, description='Навзание последовательности'), 
+                          id: int = Query(None, description='ID последовательности'), 
+                          session = Depends(get_session())
+                          ):
+    data = await PathService(session).seq(name, id)
+    return AnswerSeqFullInfo.to_query(data)
 
 @path_router.get('', response_model=AnswerPathFullInfo)
 async def get_path(
@@ -102,6 +125,34 @@ async def get_group(
                             ):
     data = await PathService(session).group(name)
     return AnswerGroupInfo.to_query(data)
+
+
+
+
+@path_router.get('/seq', response_model=AnswerSeqFullInfo)
+async def get_seq_by_path_id(
+                          path_id: int = Query(description='ID пути'), 
+                          seq_number: int = Query(description='Номер последовательности'), 
+                          session = Depends(get_session())
+                          ):
+    data = await PathService(session).seq_by_path_id(path_id, seq_number)
+    return AnswerSeqFullInfo.to_query(data)
+
+@path_router.get('/seqs', response_model=AnswerAllSeqInfo)
+async def get_seqs_by_path_id(
+                          path_id: int = Query(description='ID пути'), 
+                          session = Depends(get_session())
+                          ):
+    data = await PathService(session).seqs_by_path_id(path_id)
+    return AnswerAllSeqInfo.to_query(data)
+
+@ga_router.get('/paths', response_model=AnswerAllPathInfo)
+async def get_path_by_ga_id(
+                         ga_id: int = Query(description='ID Великого древнего'),  
+                         session = Depends(get_session())
+                         ):
+    data = await PathService(session).path_by_ga_id(ga_id)
+    return AnswerAllPathInfo.to_query(data)
 
 
 

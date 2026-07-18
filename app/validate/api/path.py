@@ -2,7 +2,7 @@ from app.validate.api.base import AnswerBody, datetime
 from app.db.models.beyonder import SequenceDB, PathDB, GreatAncientDB
 
 class AnswerSeqInfo(AnswerBody):
-    seq: int
+    number: int
     name: str
     path_id: int
     seq_id: int
@@ -19,44 +19,41 @@ class AnswerGAInfo(AnswerBody):
 
 
 
+class AnswerSeqFullInfo(AnswerSeqInfo):
+    path_name: str | None = None
 
+    @classmethod
+    def to_query(cls, data: SequenceDB):
+        path_name = data.path.name
+        return cls(path_name=path_name, seq_id=data.id, number=data.number, name=data.name, path_id=data.path_id)
 
-class AnswerPathFullInfo(AnswerBody):
-    ga_name: str | None = None
-    seqs: list[AnswerSeqInfo] | None = None
-    name: str | None = None
+class AnswerPathFullInfo(AnswerPathInfo):
+    ga: AnswerGAInfo
+    seqs: list[AnswerSeqInfo]
 
     @classmethod
     def to_query(cls, data: PathDB):
-        if data:
-            ga_name = data.ga.name
-            seqs = [AnswerSeqInfo(seq_id=s.id, seq=s.number, name=s.name, path_id=data.id) for s in data.sequence_datas]
-            return cls(ga_name=ga_name, seqs=seqs, name=data.name)
-        return cls()
+        ga = AnswerGAInfo(name=data.ga.name, ga_id=data.ga.id, group=data.ga.group)
+        seqs = [AnswerSeqInfo(seq_id=s.id, number=s.number, name=s.name, path_id=data.id) for s in data.sequence_datas]
+        return cls(ga=ga, ga_id=data.ga.id, seqs=seqs, name=data.name, group=data.ga.group, path_id=data.id)
 
-class AnswerGAFullInfo(AnswerBody):
-    ga_name: str | None = None
-    paths: list[AnswerPathInfo] | None = None
+class AnswerGAFullInfo(AnswerGAInfo):
+    paths: list[AnswerPathInfo]
 
     @classmethod
     def to_query(cls, data: GreatAncientDB):
-        if data:
-            ga_name = data.name
-            paths = [AnswerPathInfo(name=p.name, path_id=p.id, group=data.group) for p in data.paths]
-            return cls(ga_name=ga_name, paths=paths)
-        return cls()
+        paths = [AnswerPathInfo(name=p.name, path_id=p.id, group=data.group) for p in data.paths]
+        return cls(name=data.name, ga_id=data.id, group=data.group, paths=paths)
 
 class AnswerGroupInfo(AnswerBody):
-    group_name: str | None = None
-    gas: list[AnswerGAInfo] | None = None
+    group_name: str
+    gas: list[AnswerGAInfo] 
 
     @classmethod
     def to_query(cls, gas: list[GreatAncientDB]):
-        if gas:
-            group_name = gas[0].group
-            new_paths = [AnswerGAInfo(name=g.name, ga_id=g.id, group=g.group) for g in gas]
-            return cls(group_name=group_name, gas=new_paths)
-        return cls()
+        group_name = gas[0].group
+        gas = [AnswerGAInfo(name=g.name, ga_id=g.id, group=g.group) for g in gas]
+        return cls(group_name=group_name, gas=gas)
     
 
 

@@ -12,11 +12,11 @@ main_router.include_router(beyonder_router)
 main_router.include_router(wiki_router)
 main_router.include_router(stats_router)
 
-@main_router.get('/info/{tg_id}', tags=['main'], operation_id='get_info')
+@main_router.get('/info/{tg_id}', tags=['main'], operation_id='get_info', response_model=AnswerBaseInfo)
 async def get_info(
                    tg_id: int = Path(description='Telegram ID пользователя'), 
                    session = Depends(get_session())
                    ):
-    user = await MainService(session, tg_id).info()
-    return AnswerBaseInfo(tg_id=tg_id).to_query(user)
+    data = await MainService(session, tg_id).info()
+    return data
 

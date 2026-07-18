@@ -7,3 +7,4 @@ python-decouple
 pytest
 fastapi
 uvicorn
+dark_swag

@@ -1,6 +1,7 @@
 from app.db.dao.models import DAO
 from app.exception.base import PermissionException
 from app.exception.beyonder import DontBeyonderException
+from app.validate.api.base import QueryBody
 
 class BaseLogic:
     def __init__(self, session, tg_id: int | None = None, purpose_tg_id: int | None = None, is_admin: bool = False):
@@ -22,7 +23,12 @@ class BaseLogic:
         if self.is_admin != is_admin_value:
             raise PermissionException()
         return self.is_admin
-
-
+    
+    async def query_body(self, tg_id: int | None = None):
+        user = await self.get_user(tg_id=tg_id)
+        return self.return_query_body(user)
+        
+    def return_query_body(self, user):
+        return QueryBody(tg_id=user.tg_id, username=user.tg_user.username, fullname=user.name)
     
 

@@ -1,7 +1,7 @@
 from app.db.base import async_session_maker
 from app.db.dao.models import DAO
 
-async def check_user(tg_id: int, username: str | None, fullname: str | None):
+async def check_user(tg_id: int, username: str | None, fullname: str | None, **kwargs):
         async with async_session_maker() as session:
             try:
                 dao = DAO(session)

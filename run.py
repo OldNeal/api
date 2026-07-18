@@ -8,6 +8,7 @@ import uvicorn
 from app.api.endpoints.main import main_router
 from app.api.midlwares import UpdateUserInfoMidlware
 from app.exception import BaseExceptionResponse, get_exception_codes
+from app.validate.api.base import AnswerMain
 
 app = FastAPI(
     title=settings.TITLE,
@@ -19,9 +20,9 @@ app = FastAPI(
 app.include_router(main_router)
 app.add_middleware(UpdateUserInfoMidlware)
 
-@app.get('/')
+@app.get('/', response_model=AnswerMain)
 def main():
-    return f'The Old Neal API, version: {app.version}'
+    return AnswerMain(message=f'The Old Neal API, version: {app.version}', version=app.version)
 
 @app.exception_handler(BaseException)
 async def handle_value_error(request, exc: BaseException):

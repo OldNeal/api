@@ -2,8 +2,8 @@ from app.logic.beyonder import BeyonderLogic
 from app.service.base import BaseService
 
 class BeyonderService(BaseService):
-    def __init__(self, session, tg_id: int | None = None, purpose_tg_id: int | None = None):
-        super().__init__(session, tg_id, purpose_tg_id)
+    def __init__(self, session, tg_id: int | None = None, purpose_tg_id: int | None = None, is_admin: bool = False):
+        super().__init__(session, tg_id, purpose_tg_id, is_admin)
         self.logic = BeyonderLogic(session, tg_id=tg_id, purpose_tg_id=purpose_tg_id, is_admin=self.is_admin)
         
     async def drink(self, path_name: str, seq: int = 9):

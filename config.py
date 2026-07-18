@@ -13,7 +13,7 @@ class Settings:
     DB_PORT = os.getenv('DB_PORT')
     DB_NAME = os.getenv('DB_NAME')  
     TITLE = 'Old Neal Api'
-    VERSION = '0.1'
+    VERSION = '0.4'
     
     ADMIN_TG_IDS = [int(id) for id in os.getenv('ADMIN_TG_IDS').split(',')]  
 

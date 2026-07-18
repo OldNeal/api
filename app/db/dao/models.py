@@ -40,7 +40,7 @@ class BeyonderDAO(BaseDAO[BeyonderDB]):
 
 class PathDAO(BaseDAO[PathDB]):
     model = PathDB
-    load = [model.sequence_datas]
+    load = [selectinload(model.sequence_datas)]
 
     async def query_by_group(self, group: str):
         try:
@@ -69,11 +69,21 @@ class PathDAO(BaseDAO[PathDB]):
         except SQLAlchemyError as e:
             raise
 
+    async def query_many_by_ga_id(self, ga_id: int):
+        return await self.find_all({'ga_id':ga_id})
+
 class SequenceDAO(BaseDAO[SequenceDB]):
     model = SequenceDB
 
     async def query_by_name(self, name: str):
         return await self.find_one_or_none({'name':name})
+
+    async def query_by_path_id(self, path_id: int, number: int):
+        return await self.find_one_or_none({'path_id':path_id, 'number':number})
+
+    async def query_many_by_path_id(self, path_id: int):
+        return await self.find_all({'path_id':path_id})
+
 
 class GreatAncientDAO(BaseDAO[GreatAncientDB]):
     model = GreatAncientDB

@@ -2,6 +2,13 @@ from app.logic.base import BaseLogic
 from app.exception.wiki import PathDontEnterFilterException
 
 class PathLogic(BaseLogic):
+    async def seq(self, name: str | None = None, id: int | None = None):
+        if id:
+            return await self.dao.sequence.query_by_id(id)
+        elif name: 
+            return await self.dao.sequence.query_by_name(name)
+        raise PathDontEnterFilterException()
+    
     async def path(self, name: str | None = None, id: int | None = None):
         if id:
             return await self.dao.path.query_by_id(id)
@@ -40,3 +47,14 @@ class PathLogic(BaseLogic):
 
     async def groups(self):
         return await self.dao.greatancient.gropus()
+
+
+
+    async def seq_by_path_id(self, path_id: int, number: int):
+        return await self.dao.sequence.query_by_path_id(path_id, number)
+
+    async def seqs_by_path_id(self, path_id: int):
+        return await self.dao.sequence.query_many_by_path_id(path_id)
+
+    async def path_by_ga_id(self, ga_id: int):
+        return await self.dao.path.query_many_by_ga_id(ga_id)

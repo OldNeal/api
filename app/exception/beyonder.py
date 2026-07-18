@@ -12,8 +12,12 @@ class ALreadyBeyonderException(BaseException):
     status_code = 454
 
 class UpseqNotComeException(BaseException):
-    default_message = 'Время еще не настало'
+    default_message = 'Зелье еще не переварилось, осталось дней: {upseq_days}'
     status_code = 455
+
+    @property
+    def template(self):
+        return "⌛ {details}"
 
 class SeqDontExistException(BaseException):
     default_message = 'Незвестная последовательность'
