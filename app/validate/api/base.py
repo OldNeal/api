@@ -25,37 +25,46 @@ class AnswerBody(BaseAPIValidate):
 class AnswerUserBody(AnswerBody):
     user: QueryBody
 
-class AnswerBeyonderInfo(AnswerBody):
+class BeyonderInfo(AnswerBody):
     path_name: str | None = None
     seq: int | None = None
     seq_name: str | None = None
+    emodzi: str | None = None
+    custom_emodzi_id: str | None = None
 
-class AnswerMemberInfo(AnswerBody):
+class MemberInfo(AnswerBody):
     titul: str | None = None
     organ_name: str | None = None
+    organ_id: int | None = None
     rank: int | None = None
     rank_name: str | None = None
+    login_at: str | None = None
 
 class AnswerBaseInfo(AnswerUserBody):
-    beyonder: AnswerBeyonderInfo | None = None
-    member: AnswerMemberInfo | None = None
+    beyonder: BeyonderInfo | None = None
+    member: MemberInfo | None = None
 
-    def to_query(self, data: UserDB):
+    def to_query(self, data: UserDB, beyonder: bool = True, member: bool = True):
         if data:
-            if data.beyonder:
-                self.beyonder = AnswerBeyonderInfo(
+            if data.beyonder and beyonder:
+                self.beyonder = BeyonderInfo(
                     path_name = data.beyonder.seq.path.sequences.get(0).name,
                     seq = data.beyonder.seq_number,
-                    seq_name = data.beyonder.seq_name
+                    seq_name = data.beyonder.seq_name,
+                    emodzi=data.beyonder.emodzi, 
+                    custom_emodzi_id=data.beyonder.custom_emodzi_id
                 )
-            if data.member:
-                self.member = AnswerMemberInfo(
+            if data.member and member:
+                self.member = MemberInfo(
                     titul = data.member.titul,
                     organ_name = data.member.organ.name,
                     rank = data.member.rank,
-                    rank_name = data.member.organ.rank_names.get(data.member.rank, 'Участник')
+                    rank_name = data.member.organ.rank_names.get(data.member.rank, 'Участник'),
+                    login_at=data.member.created_at.isoformat()
                 )
         return self
+
+
 
 class AnswerMain(AnswerBody):
     message: str

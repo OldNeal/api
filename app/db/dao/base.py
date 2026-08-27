@@ -21,7 +21,7 @@ class BaseDAO(Generic[T]):
         try:
             query = select(self.model).filter_by(id=data_id)
             if self.load and len(self.load) > 0:
-                query = query.options(*[selectinload(l) for l in self.load])
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalar_one_or_none()
             return record
@@ -148,10 +148,20 @@ class BaseDAO(Generic[T]):
         try:
             for key, value in values.items():
                 setattr(record, key, value)
-            await self.session.flush()
             return record
         except SQLAlchemyError as e:
             raise          
+
+    def update_obj(self, record, values: dict):
+        try:
+            for key, value in values.items():
+                try:
+                    setattr(record, key, value)
+                except:
+                    continue
+            return record
+        except SQLAlchemyError as e:
+            raise     
 
     async def update_many(self, filters: dict, values: dict) -> int:
         try:

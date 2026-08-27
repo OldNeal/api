@@ -29,7 +29,8 @@ class PathLogic(BaseLogic):
 
 
     async def search(self, name: str):
-        return await self.dao.path.search_by_name(name)
+        result = await self.dao.path.search_by_name(name)
+        return {p.id:p for p in result}.values()
     
     async def ga_search(self, name: str):
         return await self.dao.greatancient.search_by_name(name)

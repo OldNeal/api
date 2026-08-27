@@ -1,4 +1,4 @@
-from app.logic.path import PathLogic
+from app.logic.wiki import PathLogic
 from app.service.base import BaseService
 
 class PathService(BaseService):

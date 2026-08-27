@@ -11,11 +11,15 @@ class AnswerPathInfo(AnswerBody):
     group: str
     name: str
     path_id: int
+    emodzi: str | None = None
+    custom_emodzi_id: str | None = None
 
 class AnswerGAInfo(AnswerBody):
     group: str
     name: str
     ga_id: int
+    emodzi: str | None = None
+    custom_emodzi_id: str | None = None
 
 
 
@@ -33,17 +37,17 @@ class AnswerPathFullInfo(AnswerPathInfo):
 
     @classmethod
     def to_query(cls, data: PathDB):
-        ga = AnswerGAInfo(name=data.ga.name, ga_id=data.ga.id, group=data.ga.group)
+        ga = AnswerGAInfo(name=data.ga.name, ga_id=data.ga.id, group=data.ga.group, emodzi=data.ga.emodzi, custom_emodzi_id=data.ga.custom_emodzi_id)
         seqs = [AnswerSeqInfo(seq_id=s.id, number=s.number, name=s.name, path_id=data.id) for s in data.sequence_datas]
-        return cls(ga=ga, ga_id=data.ga.id, seqs=seqs, name=data.name, group=data.ga.group, path_id=data.id)
+        return cls(ga=ga, ga_id=data.ga.id, seqs=seqs, name=data.name, group=data.ga.group, path_id=data.id, emodzi=data.emodzi, custom_emodzi_id=data.custom_emodzi_id)
 
 class AnswerGAFullInfo(AnswerGAInfo):
     paths: list[AnswerPathInfo]
 
     @classmethod
     def to_query(cls, data: GreatAncientDB):
-        paths = [AnswerPathInfo(name=p.name, path_id=p.id, group=data.group) for p in data.paths]
-        return cls(name=data.name, ga_id=data.id, group=data.group, paths=paths)
+        paths = [AnswerPathInfo(name=p.name, path_id=p.id, group=data.group, emodzi=p.emodzi, custom_emodzi_id=p.custom_emodzi_id) for p in data.paths]
+        return cls(name=data.name, ga_id=data.id, group=data.group, paths=paths, emodzi=data.emodzi, custom_emodzi_id=data.custom_emodzi_id)
 
 class AnswerGroupInfo(AnswerBody):
     group_name: str
@@ -52,7 +56,7 @@ class AnswerGroupInfo(AnswerBody):
     @classmethod
     def to_query(cls, gas: list[GreatAncientDB]):
         group_name = gas[0].group
-        gas = [AnswerGAInfo(name=g.name, ga_id=g.id, group=g.group) for g in gas]
+        gas = [AnswerGAInfo(name=g.name, ga_id=g.id, group=g.group, emodzi=g.emodzi, custom_emodzi_id=g.custom_emodzi_id) for g in gas]
         return cls(group_name=group_name, gas=gas)
     
 
@@ -61,7 +65,7 @@ class AnswerGroupInfo(AnswerBody):
 
 class AnswerSeqSearchInfo(AnswerBody):
     search_value: str | None = None
-    seqs: list[AnswerPathInfo] | None = None
+    seqs: list[AnswerSeqInfo] | None = None
 
     @classmethod
     def to_query(cls, search_value: str, seqs: list[SequenceDB]):
@@ -77,7 +81,7 @@ class AnswerPathSearchInfo(AnswerBody):
     @classmethod
     def to_query(cls, search_value: str, paths: list[PathDB]):
         if paths:
-            paths = [AnswerPathInfo(name=p.name, path_id=p.id, group=p.ga.group) for p in paths]
+            paths = [AnswerPathInfo(name=p.name, path_id=p.id, group=p.ga.group, emodzi=p.emodzi, custom_emodzi_id=p.custom_emodzi_id) for p in paths]
             return cls(search_value=search_value, paths=paths)
         return cls(search_value=search_value)
 
@@ -88,7 +92,7 @@ class AnswerGASearchInfo(AnswerBody):
     @classmethod
     def to_query(cls, search_value: str, gas: list[GreatAncientDB]):
         if gas:
-            new_gas = [AnswerGAInfo(name=g.name, ga_id=g.id, group=g.group) for g in gas]
+            new_gas = [AnswerGAInfo(name=g.name, ga_id=g.id, group=g.group, emodzi=g.emodzi, custom_emodzi_id=g.custom_emodzi_id) for g in gas]
             return cls(search_value=search_value, gas=new_gas)
         return cls(search_value=search_value)
     

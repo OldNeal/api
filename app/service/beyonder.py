@@ -10,13 +10,13 @@ class BeyonderService(BaseService):
         return await self.logic.drink(path_name, seq)
     
     async def info(self):
-        return await self.logic.info()
+        return await self.logic.time_info()
 
-    async def upseq(self, add_seq: int = 1, path_name: str | None = None):
-        return await self.logic.upseq(add_seq, path_name)
+    async def upseq(self, new_seq: int | None = None, path_name: str | None = None):
+        return await self.logic.upseq(new_seq, path_name)
     
-    async def downseq(self, remove_seq: int = 1, path_name: str | None = None):
-        return await self.logic.downseq(remove_seq, path_name)
+    async def downseq(self, new_seq: int | None = None, path_name: str | None = None):
+        return await self.logic.downseq(new_seq, path_name)
     
     async def replace_time(self, new_time):
         return await self.logic.replace_time(new_time)

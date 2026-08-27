@@ -1,7 +1,7 @@
 from app.db.dao.base import BaseDAO, AsyncSession
 from app.db.models.main import ChatDB, UserDB, TgChatDB, TgUserDB
 from app.db.models.beyonder import BeyonderDB, PathDB, SequenceDB, GreatAncientDB
-from app.db.models.organ import OrganDB, MemberDB, OrganPermissionDB
+from app.db.models.organ import OrganDB, MemberDB
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select, update, delete, func, join, or_, all_, and_, any_
 from sqlalchemy.orm import selectinload, joinedload
@@ -13,6 +13,25 @@ class UserDAO(BaseDAO[UserDB]):
 
     async def query_by_tg_id(self, tg_id: int):
         return await self.find_one_or_none({'tg_id':tg_id})
+
+    async def get_organ_owner_by_organ_id(self, organ_id: int):
+        try:
+            query = select(self.model).join(MemberDB).filter_by(organ_id=organ_id, rank=0)
+            result = await self.session.execute(query)
+            record = result.scalar_one_or_none()
+            return record
+        except SQLAlchemyError as e:
+            raise
+
+    async def get_members_by_organ_id(self, organ_id: int):
+        try:
+            query = select(self.model).join(MemberDB).filter_by(organ_id=organ_id)
+            result = await self.session.execute(query)
+            record = result.scalars().all()
+            return record
+        except SQLAlchemyError as e:
+            raise
+
 
 class ChatDAO(BaseDAO[ChatDB]):
     model = ChatDB
@@ -62,7 +81,7 @@ class PathDAO(BaseDAO[PathDB]):
 
     async def search_by_name(self, name: str):
         try:
-            query = select(self.model).join(SequenceDB).where(or_(*[func.lower(SequenceDB.name).contains(f'%{n}%') for n in name.split(' ')])).options(selectinload(self.model.sequence_datas))
+            query = select(self.model).join(SequenceDB).where(or_(*[func.lower(SequenceDB.name).contains(f'%{n}%') for n in name.lower().split(' ')])).options(selectinload(self.model.sequence_datas))
             result = await self.session.execute(query)
             record = result.scalars().all()
             return record
@@ -87,18 +106,7 @@ class SequenceDAO(BaseDAO[SequenceDB]):
 
 class GreatAncientDAO(BaseDAO[GreatAncientDB]):
     model = GreatAncientDB
-
-    async def query_by_name(self, name: str):
-        return await self.find_one_or_none({'name':name})
-
-    async def query_by_name(self, name: str):
-        try:
-            query = select(self.model).where(self.model.name.ilike(name)).options(selectinload(self.model.paths).selectinload(PathDB.sequence_datas))
-            result = await self.session.execute(query)
-            record = result.scalars().first()
-            return record
-        except SQLAlchemyError as e:
-            raise
+    load = [selectinload(model.paths).selectinload(PathDB.sequence_datas)]
 
     async def search_by_name(self, name: str):
         try:
@@ -121,9 +129,29 @@ class GreatAncientDAO(BaseDAO[GreatAncientDB]):
 
 class OrganDAO(BaseDAO[OrganDB]):
     model = OrganDB
+    load = [selectinload(model.members)]
 
     async def query_by_name(self, name: str):
         return await self.find_one_or_none({'name':name})
+
+    async def get_members_count(self, organ_id: int):
+        """Получить количество участников в организации"""
+        try:
+            query = select(self.model).filter_by(id=organ_id)
+            result = await self.session.execute(query)
+            record = result.scalars().all().count()
+            return record
+        except SQLAlchemyError as e:
+            raise
+
+    async def search_by_name(self, name: str):
+        try:
+            query = select(self.model).where(or_(*[func.lower(self.model.name).contains(f'%{n}%') for n in name.lower().split(' ')]))
+            result = await self.session.execute(query)
+            record = result.scalars().all()
+            return record
+        except SQLAlchemyError as e:
+            raise
 
 class MemberDAO(BaseDAO[MemberDB]):
     model = MemberDB
@@ -131,9 +159,12 @@ class MemberDAO(BaseDAO[MemberDB]):
     async def query_by_user_id(self, user_id: int):
         return await self.find_one_or_none({'user_id':user_id})
 
-class OrganPermissionDAO(BaseDAO[OrganPermissionDB]):
-    model = OrganPermissionDB
+    async def get_owner(self, organ_id: int):
+        return await self.find_one_or_none({'organ_id':organ_id, 'rank':0})
 
+    async def get_members(self, organ_id: int):
+        return await self.find_all({'organ_id':organ_id})
+    
 class DAO:
     def __init__(self, session: AsyncSession):
         if type(session) != AsyncSession:
@@ -149,12 +180,6 @@ class DAO:
         self.greatancient = GreatAncientDAO(self.session)
         self.organ = OrganDAO(self.session)
         self.member = MemberDAO(self.session)
-        self.organpermission = OrganPermissionDAO(self.session)
-
-    async def add_or_update(self, tg_id: int):
-        user = await self.user.query_by_tg_id(tg_id)
-        return
-    
 
     async def flush(self):
         await self.session.flush()  

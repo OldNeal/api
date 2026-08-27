@@ -13,6 +13,8 @@ class PathDB(Base):
     ga_id: Mapped[int] = mapped_column(ForeignKey('GreatAncientDB.id'))
     ga: Mapped['GreatAncientDB'] = relationship('GreatAncientDB', uselist=False, lazy='joined', back_populates='paths', cascade='all')
     sequence_datas: Mapped[list['SequenceDB']] = relationship('SequenceDB', uselist=True, lazy='select', back_populates='path', cascade='all')
+    emodzi: Mapped[str | None] = mapped_column(default=None)
+    custom_emodzi_id: Mapped[str | None] = mapped_column(default=None)
 
     @property
     def sequences(self):
@@ -26,7 +28,9 @@ class GreatAncientDB(Base):
     name: Mapped[str]
     group: Mapped[str]
     paths: Mapped[list['PathDB']] = relationship('PathDB', uselist=True, lazy='select', back_populates='ga', cascade='all')
-
+    emodzi: Mapped[str | None] = mapped_column(default=None)
+    custom_emodzi_id: Mapped[str | None] = mapped_column(default=None)
+    
     @property
     def number(self):
         return -1
@@ -50,6 +54,14 @@ class BeyonderDB(Base):
         return self.ga.name if self.ga_id else self.seq.name
 
     @property
+    def emodzi(self):
+        return self.ga.emodzi if self.ga_id else self.seq.path.emodzi
+    
+    @property
+    def custom_emodzi_id(self):
+        return self.ga.custom_emodzi_id if self.ga_id else self.seq.path.custom_emodzi_id
+
+    @property    
     def upseq_days(self):
         return (self.next_upseq.date() - datetime.now().date()).days if self.next_upseq else None
 

@@ -9,6 +9,7 @@ from app.api.endpoints.main import main_router
 from app.api.midlwares import UpdateUserInfoMidlware
 from app.exception import BaseExceptionResponse, get_exception_codes
 from app.validate.api.base import AnswerMain
+from app.logging.base import botlog
 
 app = FastAPI(
     title=settings.TITLE,
@@ -25,7 +26,7 @@ def main():
     return AnswerMain(message=f'The Old Neal API, version: {app.version}', version=app.version)
 
 @app.exception_handler(BaseException)
-async def handle_value_error(request, exc: BaseException):
+async def handle_base_error(request, exc: BaseException):
     return JSONResponse(status_code=exc.status_code, content=exc.content)
 
 @app.exception_handler(HTTPException)
@@ -34,7 +35,7 @@ async def handle_value_error(request, exc: HTTPException):
     return JSONResponse(status_code=exc.status_code, content=response.model_dump())
 
 @app.exception_handler(RequestValidationError)
-async def handle_any_error(request, exc):
+async def handle_errors(request, exc):
     formatted_errors = [
         {
             "field": " -> ".join(str(loc) for loc in err["loc"]),
@@ -44,7 +45,7 @@ async def handle_any_error(request, exc):
         for err in exc.errors()
     ]
     response = BaseExceptionResponse(message="Ошибка валидации входных данных", status_code=400, content=formatted_errors)
-    
+
     return JSONResponse(status_code=response.status_code, content=response.model_dump())
 
 @app.exception_handler(Exception)
@@ -55,4 +56,9 @@ async def handle_any_error(request, exc):
 use_route_names_as_operation_ids(app)
 
 if __name__ == '__main__':
-    uvicorn.run("run:app", reload=True)
+    botlog.start()
+    uvicorn.run(
+        "run:app", 
+        reload=True,
+        log_level="WARNING",  
+        access_log=False) 

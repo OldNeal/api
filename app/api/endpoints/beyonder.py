@@ -28,10 +28,9 @@ async def upseq(
                 query: QueryBody, 
                 tg_id: int = Query(None, description='Telegram ID пользователя'), 
                 path_name: str | None = Query(None, description='Путь на который переходит потусторонний, None - остаться на последовательности'), 
-                seq: int = Query(1, description='Насколько увеличить последовательнсоть?'),
+                seq: int = Query(None, description='Новая последовательность'),
                 session = Depends(get_session())
                 ):
-
     data = await BeyonderService(session, query.tg_id, tg_id, query.is_admin).upseq(seq, path_name)
     return data
 
@@ -40,7 +39,7 @@ async def dowseq(
                  query: QueryBody, 
                  tg_id: int = Query(None, description='Telegram ID пользователя'), 
                  path_name: str | None = Query(None, description='Путь на который переходит потусторонний, None - остаться на последовательности'), 
-                 seq: int = Query(1, description='Насколько понизить последовательнсоть'),
+                 seq: int = Query(None, description='Новая последовательность'),
                  session = Depends(get_session())
                  ):
     data = await BeyonderService(session, query.tg_id, tg_id, query.is_admin).downseq(seq, path_name)

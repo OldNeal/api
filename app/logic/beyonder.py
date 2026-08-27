@@ -6,7 +6,7 @@ from app.validate.api.beyonder import (AnswerTimeReplace,
                                        AnswerTimeRedact, 
                                        AnswerRedactSeq, 
                                        AnswerTimeInfo,
-                                       Data)
+                                       Sequence)
 
 upseq_time = {
   9:'',
@@ -31,10 +31,6 @@ class BeyonderLogic(BaseLogic):
             raise SeqDontExistException(seq=seq)
         return seq
 
-    async def info(self):
-        user = await self.get_user(is_raise_not_beyonder=True)
-        return AnswerTimeInfo(user=await self.query_body(), next_upseq=user.beyonder.next_upseq, last_upseq=user.beyonder.last_upseq, upseq_days=user.beyonder.upseq_days)
-    
     async def drink(self, path_name: str, seq: int = 9):
         if seq < 9:
             self.check_permission()
@@ -58,18 +54,20 @@ class BeyonderLogic(BaseLogic):
                 'ga':path.ga,
                 'seq':path.sequences.get(0), 
             }
-        bndr = await self.dao.beyonder.add(new_bndr)
-        user.beyonder = bndr
+        user.beyonder = await self.dao.beyonder.add(new_bndr)
         await self.dao.flush()
         return AnswerRedactSeq(user=await self.query_body(), 
-                           new=Data(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name),
+                           new=Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name),
                            operation='add')
   
-    async def upseq(self, add_seq: int = 1, path_name: str | None = None):
-        if add_seq > 1:
-            self.check_permission()
+    async def upseq(self, new_seq_number: int | None = None, path_name: str | None = None):
         user = await self.get_user(self.purpose_tg_id, is_raise_not_beyonder=True)
-        self.check_exist_seq(user.beyonder.seq_number - add_seq)
+        if new_seq_number:
+            new_seq_number = new_seq_number
+            self.check_permission()
+        else:
+            new_seq_number = user.beyonder.seq_number - 1
+        self.check_exist_seq(new_seq_number)
         await user.beyonder.awaitable_attrs.ga
         old_seq = user.beyonder.seq_name
         old_number = user.beyonder.seq_number
@@ -82,24 +80,26 @@ class BeyonderLogic(BaseLogic):
             path = user.beyonder.seq.path
         if path == None:
             raise PathDontSearchException(path_name=path_name)
-        if user.beyonder.seq_number - add_seq < 0:
+        if new_seq_number < 0:
             user.beyonder.ga = path.ga
             new_seq = path.sequences.get(0)
             user.beyonder.seq = new_seq
         else:
-            new_seq = path.sequences.get(user.beyonder.seq_number - add_seq)
+            new_seq = path.sequences.get(new_seq_number)
             user.beyonder.seq = new_seq
         user.beyonder.next_upseq = self.get_upseq_time(user.beyonder.seq_number)
         await self.dao.flush()
         return AnswerRedactSeq(user=await self.query_body(), 
-                           new=Data(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name),
-                           old=Data(seq=old_seq, number=old_number, path=old_path),
+                           new=Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name),
+                           old=Sequence(seq=old_seq, number=old_number, path=old_path),
                            operation='up')
     
-    async def downseq(self, remove_seq: int = 1, path_name: str | None = None):
+    async def downseq(self, new_seq_number: int | None = None, path_name: str | None = None):
         self.check_permission()
         user = await self.get_user(self.purpose_tg_id, is_raise_not_beyonder=True)
-        self.check_exist_seq(user.beyonder.seq_number + remove_seq)
+        if new_seq_number == None:
+            new_seq_number = user.beyonder.seq_number + 1
+        self.check_exist_seq(new_seq_number)
         old_seq = user.beyonder.seq_name
         old_number = user.beyonder.seq_number
         old_path = user.beyonder.seq.path.name
@@ -109,19 +109,23 @@ class BeyonderLogic(BaseLogic):
             path = user.beyonder.seq.path
         if path == None:
             raise PathDontSearchException(path_name=path_name)
-        if user.beyonder.seq_number + remove_seq > 9:
+        if new_seq_number > 9:
             user.beyonder = None
         else:
-            new_seq = path.sequences.get(user.beyonder.seq_number + remove_seq)
+            new_seq = path.sequences.get(new_seq_number)
             user.beyonder.seq = new_seq
             user.beyonder.ga = None
         user.beyonder.next_upseq = self.get_upseq_time(user.beyonder.seq_number)
         await self.dao.flush()
         return AnswerRedactSeq(user=await self.query_body(), 
-                           new=(Data(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name) if user.beyonder else None),
-                           old=Data(seq=old_seq, number=old_number, path=old_path),
+                           new=(Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name) if user.beyonder else None),
+                           old=Sequence(seq=old_seq, number=old_number, path=old_path),
                            operation='down')   
-     
+
+    async def time_info(self):
+        user = await self.get_user(is_raise_not_beyonder=True)
+        return AnswerTimeInfo(user=await self.query_body(), next_upseq=user.beyonder.next_upseq, last_upseq=user.beyonder.last_upseq, upseq_days=user.beyonder.upseq_days)
+    
     async def replace_time(self, new_time: datetime):
         self.check_permission()
         user = await self.get_user(self.purpose_tg_id, is_raise_not_beyonder=True)
@@ -143,7 +147,7 @@ class BeyonderLogic(BaseLogic):
         return AnswerTimeRedact(user=await self.query_body(),old_time=old_time, new_time=user.beyonder.next_upseq, seconds=delta.total_seconds(), operator=operator)
 
     async def kill(self):
-        if self.purpose_tg_id:
+        if self.purpose_tg_id and not self.purpose_tg_id == self.tg_id:
             self.check_permission()
         user = await self.get_user(self.purpose_tg_id, is_raise_not_beyonder=True)
         user.beyonder = None

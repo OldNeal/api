@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 from app.validate.api.exception import BaseExceptionResponse
+from app.logging.base import log
 
 class BaseException(HTTPException):
     status_code = 400
@@ -12,6 +13,7 @@ class BaseException(HTTPException):
         self.details = self.detail.format_map(kwargs)
         self.message = self.template.format(name=self.name, status_code=self.status_code, details=self.details)
         self.content = self.model_response.model_validate(self.__dict__ | {'type':self.type()}).model_dump()
+        log.warning(self.message)
 
     @property
     def template(self):
@@ -32,3 +34,8 @@ class PermissionException(BaseException):
 class ParametrValidationException(BaseException):
     default_message = 'Ошибка валидации query или path аргументов в endpoints'    
     status_code = 422
+
+class UserDontFind(BaseException):
+    default_message = 'Пользователь не найден'    
+    status_code = 432
+    

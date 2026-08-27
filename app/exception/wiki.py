@@ -2,8 +2,7 @@ from app.exception.base import BaseException
 
 class WikiException(BaseException):
     default_message = 'The wiki exception'
-    status_code = 432
-
+    
 class PathDontSearchException(BaseException):
     default_message = 'Путь не найден'
     status_code = 433

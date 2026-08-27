@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query, Path
-from app.validate.api.path import (
+from app.validate.api.wiki import (
                                    AnswerBody, 
                                    AnswerGAFullInfo, 
                                    AnswerGroupInfo, 
@@ -13,7 +13,7 @@ from app.validate.api.path import (
                                    AnswerAllSeqInfo,
                                    AnswerAllGroupInfo
                                    )
-from app.service.path import PathService
+from app.service.wiki import PathService
 from app.api.depends.session import get_session
 from app.exception import get_exception_codes
 
@@ -55,33 +55,21 @@ async def search_ga(
 
 @seq_router.get('/all', response_model=AnswerAllSeqInfo)
 async def get_seqs(session = Depends(get_session())):
-    """
-    Возвращает список всех Последовательностей
-    """
     data = await PathService(session).seqs()
     return AnswerAllSeqInfo.to_query(data)
 
 @path_router.get('/all', response_model=AnswerAllPathInfo)
 async def get_paths(session = Depends(get_session())):
-    """
-    Возвращает список всех Путей
-    """
     data = await PathService(session).paths()
     return AnswerAllPathInfo.to_query(data)
 
 @ga_router.get('/all', response_model=AnswerAllGAInfo)
 async def get_gas(session = Depends(get_session())):
-    """
-    Возвращает список всех Великих Древних
-    """
     data = await PathService(session).gas()
     return AnswerAllGAInfo.to_query(data)
 
 @group_router.get('/all', response_model=AnswerAllGroupInfo)
 async def get_groups(session = Depends(get_session())):
-    """
-    Возвращает все группы Путей
-    """
     data = await PathService(session).groups()
     return AnswerAllGroupInfo(groups=data)
 
