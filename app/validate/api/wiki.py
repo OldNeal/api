@@ -118,7 +118,7 @@ class AnswerAllPathInfo(AnswerBody):
     @classmethod
     def to_query(cls, paths: list[PathDB]):
         if paths:
-            paths = [AnswerPathInfo(name=p.name, path_id=p.id, group=p.ga.group) for p in paths]
+            paths = [AnswerPathInfo(name=p.name, path_id=p.id, group=p.ga.group, emodzi=p.emodzi, custom_emodzi_id=p.custom_emodzi_id) for p in paths]
             return cls(paths=paths)
         return cls()
 
@@ -128,7 +128,7 @@ class AnswerAllGAInfo(AnswerBody):
     @classmethod
     def to_query(cls, gas: list[GreatAncientDB]):
         if gas:
-            new_gas = [AnswerGAInfo(name=g.name, ga_id=g.id, group=g.group) for g in gas]
+            new_gas = [AnswerGAInfo(name=g.name, ga_id=g.id, group=g.group, emodzi=g.emodzi, custom_emodzi_id=g.custom_emodzi_id) for g in gas]
             return cls(gas=new_gas)
         return cls()
     

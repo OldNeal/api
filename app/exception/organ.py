@@ -42,3 +42,7 @@ class ClosenOrganError(OrganException):
 class ExistRankError(OrganException):
     default_message = 'Такого ранга нету'
     status_code = 467
+
+class ALreadyOwnerError(OrganException):
+    default_message = 'Вы уже глава организации'
+    status_code = 468

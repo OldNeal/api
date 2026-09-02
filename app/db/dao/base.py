@@ -15,6 +15,14 @@ class BaseDAO(Generic[T]):
     def __init__(self, session: AsyncSession):
         super().__init__()
         self.session = session
+
+    async def count(self, filter: dict = {}):
+        try:
+            query = select(func.count()).select_from(self.model).filter_by(**filter)
+            result = await self.session.scalar(query)
+            return result or 0
+        except SQLAlchemyError as e:
+            raise
     
     async def find_one_or_none_by_id(self, data_id: int):
         # Найти запись по ID

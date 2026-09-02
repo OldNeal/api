@@ -1,6 +1,3 @@
-# ============================================
-# Dockerfile для FastAPI сервера
-# ============================================
 FROM python:3.13-slim AS api_builder
 
 # Настройки окружения
@@ -29,5 +26,4 @@ RUN useradd --create-home --shell /bin/bash apiuser && \
     chown -R apiuser:apiuser /app
 USER apiuser
 
-# Запуск API с авто-перезагрузкой (для разработки)
-CMD ["uvicorn", "main:run", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "run:app", "--host", "0.0.0.0", "--port", "8000"]

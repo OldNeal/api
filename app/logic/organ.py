@@ -1,9 +1,9 @@
 from app.logic.base import BaseLogic
-from app.validate.api.organ import AnswerOrganInfo, OrganInfo, ForButtons, AnswerAllOrganInfo, AnswerRedactRank, AnswerOrganSetting, AnswerOrganSettingValues, AnswerRedactTitul, AnswerOrganInfoDescription, AnswerOrganInfoMembers, AnswerMemberInfo, OrganSettingDefault, MemberInfo, UserDB
+from app.validate.api.organ import AnswerOrganInfo, AnswerOrganGive, OrganInfo, ForButtons, AnswerAllOrganInfo, AnswerRedactRank, AnswerOrganSetting, AnswerOrganSettingValues, AnswerRedactTitul, AnswerOrganInfoDescription, AnswerOrganInfoMembers, AnswerMemberInfo, OrganSettingDefault, MemberInfo, UserDB
 from app.db.models.organ import MemberDB, OrganDB
 from app.db.models.main import UserDB
 from app.logic.setting import OrganSetting
-from app.exception.organ import DontMemberError, ExistRankError, ExistOrganError, InOneOrganError, ALreadyMemberError, OrganPermissioError, OrganPermissionNewRankError, HiddenOrganError, ClosenOrganError, OrganPermissionPurposeRankError
+from app.exception.organ import DontMemberError, ExistRankError, ALreadyOwnerError, ExistOrganError, InOneOrganError, ALreadyMemberError, OrganPermissioError, OrganPermissionNewRankError, HiddenOrganError, ClosenOrganError, OrganPermissionPurposeRankError
 
 class OrganLogic(BaseLogic):
     def __init__(self, session, tg_id: int | None = None, purpose_tg_id: int | None = None, organ_id: int | None = None, is_admin: bool = False):
@@ -12,62 +12,66 @@ class OrganLogic(BaseLogic):
 
     def boolean(self, *args, func, **kwargs):
         try:
-            return bool(func(*args, **kwargs))
+            return bool(func(*args, **kwargs | {'to_print':False}))
         except:
             return False
 
-    def is_member(self, user: UserDB):
+    def is_member(self, user: UserDB, to_print: bool = True):
         if user.member is None:
-            raise DontMemberError(tg_id=user.tg_id)
+            raise DontMemberError(tg_id=user.tg_id, to_print=to_print)
         return user
 
-    def is_not_member(self, user: UserDB):
+    def is_not_member(self, user: UserDB, to_print: bool = True):
         if user.member:
-            raise ALreadyMemberError(tg_id=user.tg_id)
+            raise ALreadyMemberError(tg_id=user.tg_id, to_print=to_print)
         return user
     
-    def is_permission(self, user: UserDB, tag: str):
+    def is_permission(self, user: UserDB, tag: str, to_print: bool = True):
         setting = OrganSetting(user.member.organ.setting)
         if user.member.rank > setting.permission.get(tag, 0):
-            raise OrganPermissioError(rank=user.member.rank)
+            raise OrganPermissioError(rank=user.member.rank, to_print=to_print)
         return user, setting
 
-    def is_hidden(self, user: UserDB, organ: OrganDB):
+    def is_hidden(self, user: UserDB, organ: OrganDB, to_print: bool = True):
         setting = OrganSetting(organ.setting)
         if setting.main.get('hidden') and not (user.member and user.member.organ_id == organ.id):
-            raise HiddenOrganError()
+            raise HiddenOrganError(to_print=to_print)
         return setting
     
-    def is_closen(self, organ: OrganDB):
+    def is_closen(self, organ: OrganDB, to_print: bool = True):
         setting = OrganSetting(organ.setting)
         if setting.main.get('closen'):
-            raise ClosenOrganError()
+            raise ClosenOrganError(to_print=to_print)
         return setting
 
-    def is_exist_rank(self, rank: int | None, organ: OrganDB):
+    def is_exist_rank(self, rank: int | None, organ: OrganDB, to_print: bool = True):
         setting = OrganSetting(organ.setting)
         if rank and not(setting.main.get('min_rank', 9) >= rank >= setting.main.get('max_rank', 0)):
-            raise ExistRankError(rank=rank)
+            raise ExistRankError(rank=rank, to_print=to_print)
         return setting
         
-    def is_rank(self, user: UserDB, purpose: UserDB, new_purpose_rank: int | None = None):
+    def is_rank(self, user: UserDB, purpose: UserDB, new_purpose_rank: int | None = None, to_print: bool = True):
         self.in_one_organ(user, purpose)
         if user.member.rank >= purpose.member.rank:
-            raise OrganPermissionPurposeRankError()
-        if new_purpose_rank and user.member.rank >= new_purpose_rank:
-            raise OrganPermissionNewRankError()
+            raise OrganPermissionPurposeRankError(to_print=to_print)
+        if new_purpose_rank and user.member.rank >= new_purpose_rank or user.member.rank >= purpose.member.rank - 1:
+            raise OrganPermissionNewRankError(to_print=to_print)
         return user, purpose
 
-    def in_one_organ(self, user: UserDB, purpose: UserDB):
+    def in_one_organ(self, user: UserDB, purpose: UserDB, to_print: bool = True):
         if user.member.organ_id != user.member.organ_id:
-            raise InOneOrganError()
+            raise InOneOrganError(to_print=to_print)
         return user, purpose
 
-    def is_owner(self, user: UserDB):
+    def is_owner(self, user: UserDB, to_print: bool = True):
         if user.member.rank != 0:
-            raise OrganPermissioError()
+            raise OrganPermissioError(to_print=to_print)
         return user
 
+    def is_capture(self, owner: AnswerMemberInfo | None, to_print: bool = True):
+        if owner:
+            raise OrganPermissioError(owner_id=owner.user.tg_id, to_print=to_print)
+        return True
     
 
     async def check_is_member(self, tg_id: int | None = None):
@@ -101,8 +105,9 @@ class OrganLogic(BaseLogic):
     async def check_capture(self):
         user = await self.check_is_member()
         owner = await self.get_owner()
-        if owner:
-            raise OrganPermissioError(owner_id=owner.user.tg_id)
+        if owner and owner.user.tg_id == user.tg_id:
+            raise ALreadyOwnerError()
+        self.is_capture(owner)
         return user
 
     async def check_give(self):
@@ -128,14 +133,14 @@ class OrganLogic(BaseLogic):
         purpose = purpose or user
         return AnswerMemberInfo(
             user=self.return_query_body(purpose),
-            member=MemberInfo(
+            member=(MemberInfo(
                     titul=purpose.member.titul,
                     organ_name=purpose.member.organ.name,
                     organ_id=purpose.member.organ.id,
                     rank=purpose.member.rank,
                     rank_name=purpose.member.rank_name,
                     login_at=purpose.member.created_at.isoformat()
-                ) if purpose.member else None,
+                ) if purpose.member else None),
             for_buttons=(await self.return_for_buttons(user) if add_for_buttons else None)
             )
 
@@ -151,18 +156,20 @@ class OrganLogic(BaseLogic):
                 member_counts=len(organ.members),
                 created_at=organ.created_at.isoformat()
                 ),
-            for_buttons=await self.return_for_buttons(user)
+            for_buttons=await self.return_for_buttons(user, organ.id)
             )
 
-    async def return_for_buttons(self, user: UserDB):
+    async def return_for_buttons(self, user: UserDB, organ_id: int | None = None):
+        owner = await self.get_owner(organ_id or self.organ_id)
+        print(owner, organ_id, self.organ_id, self.boolean(owner, func=self.is_capture))
         return ForButtons(
                 is_member=self.boolean(user, func=self.is_member),
-                organ_id=user.member.organ_id if user.member else None,
+                organ_id=user.member.organ_id if user.member else organ_id,
                 is_redact_setting=self.boolean(user, 'redact_setting', func=self.is_permission),
                 is_redact_rank=self.boolean(user, 'redact_rank', func=self.is_permission),
                 is_redact_titul=self.boolean(user, 'redact_titul', func=self.is_permission),
                 is_kick=self.boolean(user, 'kick', func=self.is_permission),
-                is_capture=await self.check_capture(),
+                is_capture=self.boolean(owner, func=self.is_capture),
                 is_give=self.boolean(user, func=self.is_owner)
             )
 
@@ -250,7 +257,7 @@ class OrganLogic(BaseLogic):
         user = await self.check_is_member()
         organ = await self.get_organ(user.member.organ_id)
         organ.members.remove(user.member)
-        await self.dao.flush()
+        await self.dao.commit()
         return await self.return_organ_info(user, organ)
     
     async def create(self, name: str):
@@ -337,6 +344,9 @@ class OrganLogic(BaseLogic):
     async def give(self):
         user, purpose = await self.check_give()
         user.member.rank = 1
-        purpose.member.rank = 1
+        purpose.member.rank = 0
         await self.dao.flush()
-        return await self.info()
+        return AnswerOrganGive(
+            user=await self.query_body(self.tg_id),
+            purpose=await self.return_member_info(user, purpose)
+        )

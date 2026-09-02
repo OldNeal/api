@@ -147,6 +147,8 @@ class OrganDAO(BaseDAO[OrganDB]):
     async def search_by_name(self, name: str):
         try:
             query = select(self.model).where(or_(*[func.lower(self.model.name).contains(f'%{n}%') for n in name.lower().split(' ')]))
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalars().all()
             return record

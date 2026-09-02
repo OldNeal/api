@@ -3,7 +3,7 @@ from app.validate.api.base import QueryBody, AnswerBaseInfo
 from app.api.depends.session import get_session
 from app.exception import get_exception_codes
 from app.service.organ import OrganService
-from app.validate.api.organ import AnswerOrganInfo, AnswerOrganSettingValues, AnswerAllOrganInfo, AnswerRedactRank, AnswerRedactTitul, AnswerOrganInfoDescription, AnswerOrganInfoMembers, AnswerMemberInfo, QueryOrganSetting, QueryOrganSettingDefault, AnswerOrganSetting
+from app.validate.api.organ import AnswerOrganInfo, AnswerOrganGive, AnswerOrganSettingValues, AnswerAllOrganInfo, AnswerRedactRank, AnswerRedactTitul, AnswerOrganInfoDescription, AnswerOrganInfoMembers, AnswerMemberInfo, QueryOrganSetting, QueryOrganSettingDefault, AnswerOrganSetting
 
 organ_router = APIRouter(prefix='/organ', tags=['organ'], responses=get_exception_codes(types=['organ']))
 
@@ -191,7 +191,7 @@ async def organ_titul_delete(
     data = await OrganService(session, query.tg_id, purpose_tg_id=tg_id).titul_delete()
     return data
 
-@organ_router.post('/give', tags=['organ'], operation_id='organ_give', response_model=AnswerOrganInfo)
+@organ_router.post('/give', tags=['organ'], operation_id='organ_give', response_model=AnswerOrganGive)
 async def organ_give(
                       query: QueryBody, 
                       tg_id: int = Query(description='Telegram ID пользователя'),                

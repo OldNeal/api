@@ -1,4 +1,4 @@
-from app.validate.api.base import datetime, Literal, BaseAPIValidate, Any, AnswerBody, AnswerBody, AnswerUserBody, QueryBody, MemberInfo, UserDB
+from app.validate.api.base import datetime, Literal, BaseAPIValidate, Any, AnswerBody, AnswerUserBody, QueryBody, MemberInfo, UserDB
 from app.validate.logic.setting import OrganSettingValidate
 
 class AnswerOrganInfoBase(AnswerBody):
@@ -64,3 +64,6 @@ class OrganSettingDefault(BaseAPIValidate):
 
 class QueryOrganSettingDefault(QueryBody):
     to_default: OrganSettingDefault
+
+class AnswerOrganGive(AnswerUserBody):
+    purpose: AnswerMemberInfo
