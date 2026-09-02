@@ -26,4 +26,4 @@ RUN useradd --create-home --shell /bin/bash apiuser && \
     chown -R apiuser:apiuser /app
 USER apiuser
 
-CMD ["uvicorn", "run:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "run.py"]
