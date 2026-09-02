@@ -59,6 +59,8 @@ if __name__ == '__main__':
     botlog.start()
     uvicorn.run(
         "run:app", 
+        host='0.0.0.0',
+        port=8000,
         reload=True,
         log_level="WARNING",  
         access_log=False) 
