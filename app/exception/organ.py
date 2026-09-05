@@ -46,3 +46,7 @@ class ExistRankError(OrganException):
 class ALreadyOwnerError(OrganException):
     default_message = 'Вы уже глава организации'
     status_code = 468
+    
+class DontEnterPurposeError(OrganException):
+    default_message = 'Вы не указали участника'
+    status_code = 469

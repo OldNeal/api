@@ -3,7 +3,7 @@ from app.validate.api.organ import AnswerOrganInfo, AnswerOrganGive, OrganInfo, 
 from app.db.models.organ import MemberDB, OrganDB
 from app.db.models.main import UserDB
 from app.logic.setting import OrganSetting
-from app.exception.organ import DontMemberError, ExistRankError, ALreadyOwnerError, ExistOrganError, InOneOrganError, ALreadyMemberError, OrganPermissioError, OrganPermissionNewRankError, HiddenOrganError, ClosenOrganError, OrganPermissionPurposeRankError
+from app.exception.organ import DontMemberError, DontEnterPurposeError, ExistRankError, ALreadyOwnerError, ExistOrganError, InOneOrganError, ALreadyMemberError, OrganPermissioError, OrganPermissionNewRankError, HiddenOrganError, ClosenOrganError, OrganPermissionPurposeRankError
 
 class OrganLogic(BaseLogic):
     def __init__(self, session, tg_id: int | None = None, purpose_tg_id: int | None = None, organ_id: int | None = None, is_admin: bool = False):
@@ -25,6 +25,11 @@ class OrganLogic(BaseLogic):
         if user.member:
             raise ALreadyMemberError(tg_id=user.tg_id, to_print=to_print)
         return user
+
+    def is_enter_purpose(self, user: UserDB, purpose: UserDB | None = None, to_print: bool = True):
+        if purpose is None or user.tg_id == purpose.tg_id:
+            raise DontEnterPurposeError(to_print=to_print)
+        return user, purpose
     
     def is_permission(self, user: UserDB, tag: str, to_print: bool = True):
         setting = OrganSetting(user.member.organ.setting)
@@ -52,6 +57,7 @@ class OrganLogic(BaseLogic):
         
     def is_rank(self, user: UserDB, purpose: UserDB, new_purpose_rank: int | None = None, to_print: bool = True):
         self.in_one_organ(user, purpose)
+        self.is_enter_purpose(user, purpose)
         if user.member.rank >= purpose.member.rank:
             raise OrganPermissionPurposeRankError(to_print=to_print)
         if new_purpose_rank and user.member.rank >= new_purpose_rank or user.member.rank >= purpose.member.rank - 1:
@@ -114,6 +120,7 @@ class OrganLogic(BaseLogic):
         user = await self.check_is_member(self.tg_id)
         purpose = await self.check_is_member()
         self.is_owner(user)
+        self.is_enter_purpose(user, purpose)
         return self.in_one_organ(user, purpose)
 
 
@@ -307,6 +314,7 @@ class OrganLogic(BaseLogic):
     
     async def rank_redact(self, operation: str, rank: int | None = None):
         user, purpose = await self.check_organ_admin_permission('redact_rank', rank)
+        self.is_enter_purpose(user, purpose)
         self.is_exist_rank(rank, user.member.organ)
         old_rank = purpose.member.rank
         if rank:
@@ -321,6 +329,7 @@ class OrganLogic(BaseLogic):
     
     async def kick(self):
         user, purpose = await self.check_organ_admin_permission('kick')
+        self.is_enter_purpose(user, purpose)
         organ = user.member.organ
         await purpose.member.organ.awaitable_attrs.members
         purpose.member.organ.members.remove(purpose.member)
@@ -329,6 +338,7 @@ class OrganLogic(BaseLogic):
     
     async def titul_redact(self, titul: str | None = None):
         user, purpose = await self.check_organ_admin_permission('redact_titul')
+        self.is_enter_purpose(user, purpose)
         old_titul = purpose.member.titul
         purpose.member.titul = titul
         await self.dao.flush()
