@@ -14,6 +14,8 @@ class QueryBody(BaseBody):
     username: str | None = None
     fullname: str | None = None
     is_admin: bool = False
+    request_id: str | None = None
+    chat_id: int | None = None
 
     @property
     def enter_body(self):

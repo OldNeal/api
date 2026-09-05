@@ -12,8 +12,18 @@ class Settings:
     DB_HOST = os.getenv('DB_HOST')
     DB_PORT = os.getenv('DB_PORT')
     DB_NAME = os.getenv('DB_NAME')  
+    
     TITLE = 'Old Neal Api'
+    DESCRIPTION = 'API для Старого Нила'
     VERSION = os.getenv('VERSION')  
+    DOCS = os.getenv('DOCS', 'f')   
+
+    APP = os.getenv('APP', 'run:app')   
+    HOST = os.getenv('HOST', '0.0.0.0')  
+    PORT = int(os.getenv('PORT', 8000)) 
+    RELOAD = os.getenv('RELOAD', 'f')  
+    UVICORN_LOG_LEVEL = os.getenv('UVICORN_LOG_LEVEL', "WARNING")
+    UVICORN_ACCESS_LOG = os.getenv('UVICORN_ACCESS_LOG', "f")
     
     ADMIN_TG_IDS = [int(id) for id in os.getenv('ADMIN_TG_IDS').split(',')]  
 
@@ -24,6 +34,27 @@ class Settings:
     @property
     def admins(self):
         return self.ADMIN_TG_IDS
+
+    @property
+    def is_reload(self):
+        return True if self.RELOAD == 't' else False
+    
+    @property
+    def is_access_log(self):
+        return True if self.UVICORN_ACCESS_LOG == 't' else False
+    
+    @property
+    def docs_url(self):
+        return '/docs' if self.DOCS == 't' else None
+
+    @property
+    def redoc_url(self):
+        return '/redoc' if self.DOCS == 't' else None
+    
+    @property
+    def openapi_url(self):
+        return '/openapi.json' if self.DOCS == 't' else None
+
 
 settings = Settings()
 admins = settings.admins

@@ -20,4 +20,7 @@ class Base(AsyncAttrs, DeclarativeBase):
     @declared_attr.directive
     def __tablename__(cls) -> str:
         return cls.__name__
+
+    def to_dict(self):
+        return {k:v for k,v in self.__dict__.items() if not k.startswith('_')}
     

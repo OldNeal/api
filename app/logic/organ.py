@@ -161,7 +161,6 @@ class OrganLogic(BaseLogic):
 
     async def return_for_buttons(self, user: UserDB, organ_id: int | None = None):
         owner = await self.get_owner(organ_id or self.organ_id)
-        print(owner, organ_id, self.organ_id, self.boolean(owner, func=self.is_capture))
         return ForButtons(
                 is_member=self.boolean(user, func=self.is_member),
                 organ_id=user.member.organ_id if user.member else organ_id,

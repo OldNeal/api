@@ -14,9 +14,13 @@ from app.logging.base import botlog
 app = FastAPI(
     title=settings.TITLE,
     version=settings.VERSION,
-    description='API для Старого Нила',
-    responses=get_exception_codes(types=['base'])
+    description=settings.DESCRIPTION,
+    responses=get_exception_codes(types=['base']),
+    docs_url=settings.docs_url,     
+    redoc_url=settings.redoc_url,    
+    openapi_url=settings.openapi_url  
 )
+
 
 app.include_router(main_router)
 app.add_middleware(UpdateUserInfoMidlware)
@@ -58,9 +62,10 @@ use_route_names_as_operation_ids(app)
 if __name__ == '__main__':
     botlog.start()
     uvicorn.run(
-        "run:app", 
-        host='0.0.0.0',
-        port=8000,
-        reload=True,
-        log_level="WARNING",  
-        access_log=False) 
+        settings.APP, 
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.is_reload,
+        log_level=settings.UVICORN_LOG_LEVEL,  
+        access_log=settings.is_access_log
+        ) 
