@@ -57,10 +57,9 @@ class OrganLogic(BaseLogic):
         
     def is_rank(self, user: UserDB, purpose: UserDB, new_purpose_rank: int | None = None, to_print: bool = True):
         self.in_one_organ(user, purpose)
-        self.is_enter_purpose(user, purpose)
-        if user.member.rank >= purpose.member.rank:
+        if user.member.rank >= purpose.member.rank and user.member.rank != 0:
             raise OrganPermissionPurposeRankError(to_print=to_print)
-        if new_purpose_rank and user.member.rank >= new_purpose_rank or user.member.rank >= purpose.member.rank - 1:
+        if new_purpose_rank and (user.member.rank >= new_purpose_rank or user.member.rank >= purpose.member.rank - 1):
             raise OrganPermissionNewRankError(to_print=to_print)
         return user, purpose
 
@@ -338,7 +337,6 @@ class OrganLogic(BaseLogic):
     
     async def titul_redact(self, titul: str | None = None):
         user, purpose = await self.check_organ_admin_permission('redact_titul')
-        self.is_enter_purpose(user, purpose)
         old_titul = purpose.member.titul
         purpose.member.titul = titul
         await self.dao.flush()
