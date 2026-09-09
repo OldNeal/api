@@ -19,7 +19,7 @@ class UpdateUserInfoMidlware(BaseHTTPMiddleware):
                 context = {'chat_id':body.chat_id} | context
             if body.request_id:
                 context |= {'request_id':body.request_id}
-            context = {'tg_id':body.tg_id} | context
+            context = {'tg_id':body.tg_id} | context | {'is_admin':body.is_admin}
         except JSONDecodeError:
             pass
         with botlog.logger.contextualize(**context):
