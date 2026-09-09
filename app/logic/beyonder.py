@@ -31,18 +31,21 @@ class BeyonderLogic(BaseLogic):
             raise SeqDontExistException(seq=seq)
         return seq
 
-    async def drink(self, path_name: str, seq: int = 9):
+    async def drink(self, path_name: str | None = None, path_id: int | None = None, seq: int = 9):
         if seq < 9:
             self.check_permission()
         self.check_exist_seq(seq)
         user = await self.get_user(self.purpose_tg_id)
         if user.beyonder:
             raise ALreadyBeyonderException(path_name=user.beyonder.path_name, purpose_user=await self.query_body())
-        if path_name == None:
+        if path_name == None and path_id == None:
             raise PathDontEnterException()
-        path = await self.dao.path.query_by_name(path_name)
+        if path_name:
+            path = await self.dao.path.query_by_name(path_name)
+        else:
+            path = await self.dao.path.query_by_id(path_id)
         if path == None:
-            raise PathDontSearchException(path_name=path_name)
+            raise PathDontSearchException(path_name=path_name, path_id=path_id)
         new_bndr = {
             'seq':path.sequences.get(seq), 
             'user_id':user.id, 

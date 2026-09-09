@@ -1,19 +1,9 @@
-from app.validate.api.base import datetime, Literal, BaseAPIValidate, Any, AnswerBody, AnswerUserBody, QueryBody, MemberInfo, UserDB
+from app.validate.api.base import datetime, Literal, BaseAPIValidate, Any, AnswerBody, AnswerUserBody, QueryBody, MemberInfo, UserDB, ForButtons
 from app.validate.logic.setting import OrganSettingValidate
 
 class AnswerOrganInfoBase(AnswerBody):
     id: int
     name: str
-
-class ForButtons(AnswerBody):
-    is_member: bool = False
-    organ_id: int | None = None
-    is_redact_setting: bool = False
-    is_redact_rank: bool = False
-    is_redact_titul: bool = False
-    is_kick: bool = False
-    is_capture: bool = False
-    is_give: bool = False
 
 class AnswerMemberInfo(AnswerUserBody):
     member: MemberInfo | None = None

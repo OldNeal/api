@@ -66,8 +66,16 @@ class AnswerBaseInfo(AnswerUserBody):
                 )
         return self
 
-
-
+class ForButtons(AnswerBody):
+    is_member: bool = False
+    organ_id: int | None = None
+    is_redact_setting: bool = False
+    is_redact_rank: bool = False
+    is_redact_titul: bool = False
+    is_kick: bool = False
+    is_capture: bool = False
+    is_give: bool = False
+    
 class AnswerMain(AnswerBody):
     message: str
     version: str

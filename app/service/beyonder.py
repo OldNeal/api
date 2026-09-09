@@ -6,8 +6,8 @@ class BeyonderService(BaseService):
         super().__init__(session, tg_id, purpose_tg_id, is_admin)
         self.logic = BeyonderLogic(session, tg_id=tg_id, purpose_tg_id=purpose_tg_id, is_admin=self.is_admin)
         
-    async def drink(self, path_name: str, seq: int = 9):
-        return await self.logic.drink(path_name, seq)
+    async def drink(self, path_name: str | None = None, path_id: int | None = None, seq: int = 9):
+        return await self.logic.drink(path_name, path_id, seq)
     
     async def info(self):
         return await self.logic.time_info()

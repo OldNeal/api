@@ -17,10 +17,11 @@ async def drink(
                 query: QueryBody, 
                 tg_id: int = Query(None, description='Telegram ID пользователя'), 
                 path_name: str | None = Query(None, description='Название пути будущего потустороннего'), 
+                path_id: int | None = Query(None, description='ID пути будущего потустороннего'), 
                 seq: int = Query(9, description='Последовательность указзаного пути'),
                 session = Depends(get_session())
                 ):
-    data = await BeyonderService(session, query.tg_id, tg_id, query.is_admin).drink(path_name, seq)
+    data = await BeyonderService(session, query.tg_id, tg_id, query.is_admin).drink(path_name, path_id, seq)
     return data
 
 @beyonder_router.patch('/upseq', response_model=AnswerRedactSeq)
