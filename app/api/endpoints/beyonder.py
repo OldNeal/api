@@ -10,7 +10,7 @@ from app.service.beyonder import BeyonderService
 from datetime import datetime, timedelta
 from app.exception import get_exception_codes
 
-beyonder_router = APIRouter(prefix='/beyonder', tags=['beyonder'], responses=get_exception_codes(types=['beyonder']))
+beyonder_router = APIRouter(prefix='/beyonder', tags=['beyonder'], responses=get_exception_codes(types=['beyonder', 'wiki']))
 
 @beyonder_router.put('/drink', response_model=AnswerRedactSeq)
 async def drink(

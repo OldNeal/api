@@ -24,7 +24,7 @@ class BotLog:
             }
         ] + [
             {
-            "sink":f'logs/{self.levels[0].name.lower()}.log',
+            "sink":f'logs/{self.levels[0].name.lower()}' + '_{time:YYYY-MM-DD}.log',
             'rotation':'7 day',
             'retention':'30 days',
             'filter':lambda r: r['level'].name == self.levels[0].name,
@@ -35,7 +35,7 @@ class BotLog:
             'serialize':True
             }, 
             {
-            "sink":f'logs/api.log',
+            "sink":f'logs/api' + '_{time:YYYY-MM-DD}.log',
             'rotation':'7 day',
             'retention':'30 days',
             'level':'DEBUG', 
@@ -45,7 +45,7 @@ class BotLog:
             'serialize':True
             }, 
             {
-            "sink":f'logs/warning.log',
+            "sink":f'logs/warning' + '_{time:YYYY-MM-DD}.log',
             'rotation':'30 day',
             'retention':'120 days',
             'level':'WARNING', 
@@ -55,7 +55,7 @@ class BotLog:
             'serialize':True
             }, 
             {
-            "sink":f'logs/error.log',
+            "sink":f'logs/error' + '_{time:YYYY-MM-DD}.log',
             'level':'ERROR', 
             'enqueue':True,
             'format':self.log_format,

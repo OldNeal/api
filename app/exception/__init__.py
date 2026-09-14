@@ -35,6 +35,6 @@ def get_exception_codes(codes: list[int] | None = None, types:  list[str] | None
         return {k:{'description':v.default_message, 'model':BaseExceptionResponse} for k,v in exception_codes.items() if k in codes} 
     elif types:
         types.append('base')
-        return {k:{'description':v.default_message, 'model':BaseExceptionResponse} for k,v in exception_codes.items() if v.type() in types} 
+        return {k:{'description':v.default_message, 'model':BaseExceptionResponse} for k,v in exception_codes.items() if v.type() in types or v.type() + '.py' in types} 
     else:
         return {k:{'description':v.default_message, 'model':BaseExceptionResponse} for k,v in exception_codes.items()} 

@@ -14,7 +14,7 @@ class BaseException(HTTPException):
         self.message = self.template.format(name=self.name, status_code=self.status_code, details=self.details)
         self.content = self.model_response.model_validate(self.__dict__ | {'type':self.type()}).model_dump()
         if to_print:
-            log.warning(self.message)
+            log.warning(self.message, **kwargs)
 
     @property
     def template(self):
