@@ -20,7 +20,7 @@ class BotLog:
         return [
             {
             'sink':sys.stderr,
-            'level':self.levels[0].name,
+            'level':self.levels[0].no,
             'format':self.log_format,
             'enqueue':True,
             }
@@ -104,8 +104,8 @@ class BotLog:
     def create_levels_base(self):
         return [
             self.logger.level("QUERY", no=15, color="<blue>", icon="✉️"),
-            self.logger.level("API START", no=1, color="<white>", icon="🏁"),
-            self.logger.level("API STOP", no=2, color="<white>", icon="🛑")
+            self.logger.level("API START", no=16, color="<white>", icon="🏁"),
+            self.logger.level("API STOP", no=17, color="<white>", icon="🛑")
             ]
 
     def create_levels_bndr(self):
