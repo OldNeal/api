@@ -74,6 +74,16 @@ class BotLog:
             'catch':True,
             'serialize':True
             } for beyonder_logs in self.beyonder_handlers
+        ] + [
+            {
+            "sink":f'logs/organ/{organ_logs.name.lower()}' + '_{time:YYYY-MM-DD}.log',
+            'filter':log_filter(organ_logs.no),
+            'level':f'{organ_logs.name}', 
+            'enqueue':True,
+            'format':self.log_format,
+            'catch':True,
+            'serialize':True
+            } for organ_logs in self.organ_handlers
         ]
     
     def create_handlers(self):
