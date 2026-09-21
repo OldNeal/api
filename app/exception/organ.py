@@ -50,3 +50,11 @@ class ALreadyOwnerError(OrganException):
 class DontEnterPurposeError(OrganException):
     default_message = 'Вы не указали участника'
     status_code = 469
+
+class DontEnterPurposeError(OrganException):
+    default_message = 'Вы не указали участника'
+    status_code = 469
+
+class ParametrValidateError(OrganException):
+    default_message = 'Неправильный тип данных в параметре {parametr_tag} ({parametr_name}). Значение этого параметра может быть только {parametr_type}'
+    status_code = 470

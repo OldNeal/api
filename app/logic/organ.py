@@ -256,6 +256,8 @@ class OrganLogic(BaseLogic):
         setting = self.is_closen(organ)
         organ.members.append(MemberDB(user_id=user.id, organ_id=organ.id, rank=setting.main.get('start_rank')))
         await self.dao.flush()
+        self.log_kwargs = {'organ_name':organ.name, 'organ_id':organ.id}
+        self.botlog.organ_login(**self.log_kwargs)
         return await self.return_organ_info(user, organ)
     
     async def exit(self):
@@ -263,6 +265,8 @@ class OrganLogic(BaseLogic):
         organ = await self.get_organ(user.member.organ_id)
         organ.members.remove(user.member)
         await self.dao.commit()
+        self.log_kwargs = {'organ_name':organ.name, 'organ_id':organ.id}
+        self.botlog.organ_exit(old_rank=user.member.rank, **self.log_kwargs)
         return await self.return_organ_info(user, organ)
     
     async def create(self, name: str):
@@ -270,6 +274,8 @@ class OrganLogic(BaseLogic):
         organ = await self.dao.organ.add({'name':name})
         organ.members.append(MemberDB(user_id=user.id, organ_id=organ.id, rank=0))
         await self.dao.flush()
+        self.log_kwargs = {'organ_name':organ.name, 'organ_id':organ.id}
+        self.botlog.organ_create(**self.log_kwargs)
         return await self.return_organ_info(user, organ)
  
     async def settings(self):
@@ -282,12 +288,17 @@ class OrganLogic(BaseLogic):
 
     async def settings_redact(self, parametrs: dict):
         user, setting = await self.check_permission('redact_setting')
+        old_setting = setting.values
         user.member.organ.setting = setting.update(parametrs).model_dump_db()
         self.dao.organ.update_obj(user.member.organ, user.member.organ.setting)
+        await self.dao.flush()
+        self.log_kwargs = {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
+        self.botlog.organ_setting(old_setting=old_setting, new_setting=setting.values, **self.log_kwargs)
         return AnswerOrganSetting(user=self.return_query_body(user), settings=setting.validate)
     
     async def settings_default(self, default: OrganSettingDefault):
         user, setting = await self.check_permission('redact_setting')
+        old_setting = setting.values
         if default.is_all:
             setting.to_default()
             user.member.organ.setting = {}
@@ -306,6 +317,8 @@ class OrganLogic(BaseLogic):
         else:
             raise
         await self.dao.flush()
+        self.log_kwargs = {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
+        self.botlog.organ_setting_default(old_setting=old_setting, **self.log_kwargs)
         return AnswerOrganSetting(user=self.return_query_body(user), settings=setting.validate)
 
 
@@ -324,15 +337,20 @@ class OrganLogic(BaseLogic):
             purpose.member.rank += 1
         self.is_exist_rank(purpose.member.rank, user.member.organ)
         await self.dao.flush()
+        self.log_kwargs = self.log_kwargs | {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
+        self.botlog.organ_rank(old_rank=old_rank, new_rank=purpose.member.rank, **self.log_kwargs)
         return AnswerRedactRank(user=self.return_query_body(purpose), new_rank=purpose.member.rank, old_rank=old_rank)
     
     async def kick(self):
         user, purpose = await self.check_organ_admin_permission('kick')
         self.is_enter_purpose(user, purpose)
         organ = user.member.organ
+        old_rank = purpose.member.rank
         await purpose.member.organ.awaitable_attrs.members
         purpose.member.organ.members.remove(purpose.member)
         await self.dao.flush()
+        self.log_kwargs = self.log_kwargs | {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
+        self.botlog.organ_kick(old_rank=old_rank, **self.log_kwargs)
         return await self.return_organ_info(purpose, organ)
     
     async def titul_redact(self, titul: str | None = None):
@@ -340,19 +358,29 @@ class OrganLogic(BaseLogic):
         old_titul = purpose.member.titul
         purpose.member.titul = titul
         await self.dao.flush()
+        self.log_kwargs = self.log_kwargs | {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
+        self.botlog.organ_titul(old_titul=old_titul, new_titul=purpose.member.titul, **self.log_kwargs)
         return AnswerRedactTitul(user=self.return_query_body(purpose), new_titul=titul, old_titul=old_titul)
 
     async def capture(self):
         user = await self.check_capture()
         user.member.rank = 0
+        old_rank = user.member.rank
         await self.dao.flush()
+        self.log_kwargs = {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
+        self.botlog.organ_rank(old_rank=old_rank, new_rank=user.member.rank, **self.log_kwargs)
         return await self.info()
     
     async def give(self):
         user, purpose = await self.check_give()
         user.member.rank = 1
         purpose.member.rank = 0
+        old_rank = user.member.rank
+        old_rank_purpose = purpose.member.rank
         await self.dao.flush()
+        self.log_kwargs = self.log_kwargs | {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
+        self.botlog.organ_rank(old_rank=old_rank, new_rank=user.member.rank, **self.log_kwargs)
+        self.botlog.organ_rank(old_rank=old_rank_purpose, new_rank=purpose.member.rank, **self.log_kwargs)
         return AnswerOrganGive(
             user=await self.query_body(self.tg_id),
             purpose=await self.return_member_info(user, purpose)

@@ -2,6 +2,7 @@ from app.db.dao.models import DAO
 from app.exception.base import PermissionException, UserDontFind
 from app.exception.beyonder import DontBeyonderException
 from app.validate.api.base import QueryBody
+from app.logging.base import botlog
 
 class BaseLogic:
     def __init__(self, session, tg_id: int | None = None, purpose_tg_id: int | None = None, is_admin: bool = False):
@@ -9,6 +10,8 @@ class BaseLogic:
         self.tg_id = tg_id
         self.purpose_tg_id = purpose_tg_id or tg_id
         self.is_admin = is_admin
+        self.botlog = botlog
+        self.log_kwargs = {'purpose_tg_id':purpose_tg_id}
 
     def check_is_not_none(self, *objs):
         for obj in objs:

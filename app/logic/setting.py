@@ -1,8 +1,42 @@
 from typing import Literal, Any
 from app.validate.logic.setting import OrganSettingValidate, SettingGroupValidate, SettingParametrValidate
+from app.exception.organ import ParametrValidateError
 from app.db.models.organ import OrganDB
 
 NOT_DEFAULT = object()
+
+def is_int(x, parametr_tag, parametr_name):
+    if isinstance(x, int):
+        return x
+    raise ParametrValidateError(parametr_tag=parametr_tag, parametr_name=parametr_name, value=x, parametr_type='числом')
+
+def is_str(x, parametr_tag, parametr_name):
+    if isinstance(x, str):
+        return x
+    raise ParametrValidateError(parametr_tag=parametr_tag, parametr_name=parametr_name, value=x, parametr_type='строкой')
+
+def is_dict(x, parametr_tag, parametr_name):
+    if isinstance(x, dict):
+        return x
+    raise ParametrValidateError(parametr_tag=parametr_tag, parametr_name=parametr_name, value=x, parametr_type='словарем')
+
+def is_bool(x, parametr_tag, parametr_name):
+    if isinstance(x, bool):
+        return x
+    raise ParametrValidateError(parametr_tag=parametr_tag, parametr_name=parametr_name, value=x, parametr_type='bool-типа')
+
+def check_rank_names(x: dict[str, str], parametr_tag, parametr_name):
+    is_dict(x, parametr_tag, parametr_name)
+    for k, v in x.items():
+        is_str(k, parametr_tag, parametr_name)
+        if not k.isdigit():
+            raise ParametrValidateError(parametr_tag=parametr_tag, parametr_name=parametr_name, value=x, parametr_type='числом')
+        else:
+            if 9 < int(k) or 0 > int(k):
+                raise ParametrValidateError(parametr_tag=parametr_tag, parametr_name=parametr_name, value=x, parametr_type='числом. Также рангов всего 10: c 9 по 0')
+        is_str(v, parametr_tag, parametr_name)
+    default_names = OrganDB.default_rank_name()
+    return default_names | x
 
 class SettingParametr:
     def __init__(self,
@@ -34,7 +68,11 @@ class SettingParametr:
 
     def update(self, data: dict[str, Any]):
         if self.is_redact:
-            self.value = self.converter(data.get(self.tag, self.default_value if self.default_value != NOT_DEFAULT else None))
+            parametr = data.get(self.tag, self.default_value if self.default_value != NOT_DEFAULT else None)
+            if not parametr is None:
+                self.value = self.converter(parametr, self.tag, self.name)
+            else:
+                self.value = None
         self.is_default_value = not bool(data.get(self.tag))
         return self
 
@@ -52,22 +90,22 @@ class SettingParametr:
     def is_not_default(self):
         return self.default_value is NOT_DEFAULT
 
-is_hidden_organ = SettingParametr('hidden', 'Видимость организации', 'main', 'bool', emodzi='🔍', default_value=False)
-is_closen_organ = SettingParametr('closen', 'Приватный вход', 'main', 'bool', emodzi='🚪', default_value=False)
-start_rank = SettingParametr('start_rank', 'Стартовый ранг', 'main', 'int', emodzi='🏁', default_value=9)
-min_rank = SettingParametr('min_rank', 'Минимальный ранг', 'main', 'int', emodzi='➖', default_value=9)
-max_rank = SettingParametr('max_rank', 'Максимальный ранг', 'main', 'int', emodzi='➕', default_value=0)
+is_hidden_organ = SettingParametr('hidden', 'Видимость организации', 'main', 'bool', emodzi='🔍', default_value=False, converter=is_bool)
+is_closen_organ = SettingParametr('closen', 'Приватный вход', 'main', 'bool', emodzi='🚪', default_value=False, converter=is_bool)
+start_rank = SettingParametr('start_rank', 'Стартовый ранг', 'main', 'int', emodzi='🏁', default_value=9, converter=is_int)
+min_rank = SettingParametr('min_rank', 'Минимальный ранг', 'main', 'int', emodzi='➖', default_value=9, converter=is_int)
+max_rank = SettingParametr('max_rank', 'Максимальный ранг', 'main', 'int', emodzi='➕', default_value=0, converter=is_int)
 
-name = SettingParametr('name', 'Название', 'appearance', 'str', emodzi='🏷️', default_value=NOT_DEFAULT)
-emodzi = SettingParametr('emodzi', 'Эмодзи', 'appearance', 'str', emodzi='🙂')
-custom_emodzi_id = SettingParametr('custom_emodzi_id', 'ID кастомного эмодзи', 'appearance', 'str', emodzi='🆔', is_hidden=True)
-description = SettingParametr('description', 'Описание', 'appearance', 'str', emodzi='📖')
-rank_names = SettingParametr('rank_names', 'Названия рангов', 'appearance', 'dict', emodzi='🔖', default_value=OrganDB.default_rank_name(), is_hidden=True)
+name = SettingParametr('name', 'Название', 'appearance', 'str', emodzi='🏷️', default_value=NOT_DEFAULT, converter=is_str)
+emodzi = SettingParametr('emodzi', 'Эмодзи', 'appearance', 'str', emodzi='🙂', converter=is_str)
+custom_emodzi_id = SettingParametr('custom_emodzi_id', 'ID кастомного эмодзи', 'appearance', 'str', emodzi='🆔', is_hidden=True, converter=is_str)
+description = SettingParametr('description', 'Описание', 'appearance', 'str', emodzi='📖', converter=is_str)
+rank_names = SettingParametr('rank_names', 'Названия рангов', 'appearance', 'dict', emodzi='🔖', default_value=OrganDB.default_rank_name(), is_hidden=True, converter=check_rank_names)
 
-redact_rank = SettingParametr('redact_rank', 'Изменять ранг', 'permission', 'int', emodzi='🎎', default_value=0)
-redact_titul = SettingParametr('redact_titul', 'Изменять титул', 'permission', 'int', emodzi='🪪', default_value=0)
-kick = SettingParametr('kick', 'Выгонять', 'permission', 'int', '⛓️‍💥', default_value=0)
-redact_setting = SettingParametr('redact_setting', 'Редактирование настроек', 'permission', 'int', emodzi='⚙️', default_value=0)
+redact_rank = SettingParametr('redact_rank', 'Изменять ранг', 'permission', 'int', emodzi='🎎', default_value=0, converter=is_int)
+redact_titul = SettingParametr('redact_titul', 'Изменять титул', 'permission', 'int', emodzi='🪪', default_value=0, converter=is_int)
+kick = SettingParametr('kick', 'Выгонять', 'permission', 'int', '⛓️‍💥', default_value=0, converter=is_int)
+redact_setting = SettingParametr('redact_setting', 'Редактирование настроек', 'permission', 'int', emodzi='⚙️', default_value=0, converter=is_int)
 
 class SettingGroup:
     def __init__(self,

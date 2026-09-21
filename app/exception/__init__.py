@@ -1,7 +1,7 @@
 from .base import PermissionException,BaseException, BaseExceptionResponse, UserDontFind
 from .beyonder import PathDontEnterException, UpseqNotComeException, DontBeyonderException, ALreadyBeyonderException, SeqDontExistException
 from .wiki import PathDontSearchException, PathDontEnterFilterException
-from .organ import DontMemberError, ALreadyOwnerError, DontEnterPurposeError, ExistRankError, ExistOrganError, InOneOrganError, ALreadyMemberError, OrganPermissioError, OrganPermissionNewRankError, OrganPermissionPurposeRankError, ClosenOrganError, HiddenOrganError
+from .organ import DontMemberError, ALreadyOwnerError, ParametrValidateError, DontEnterPurposeError, ExistRankError, ExistOrganError, InOneOrganError, ALreadyMemberError, OrganPermissioError, OrganPermissionNewRankError, OrganPermissionPurposeRankError, ClosenOrganError, HiddenOrganError
 
 exceptions: list[type[BaseException]] = [
     SeqDontExistException,
@@ -25,7 +25,8 @@ exceptions: list[type[BaseException]] = [
     HiddenOrganError,
     ExistRankError, 
     ALreadyOwnerError, 
-    DontEnterPurposeError
+    DontEnterPurposeError,
+    ParametrValidateError
 ]
 
 exception_codes = {e.status_code:e for e in exceptions}
