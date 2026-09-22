@@ -94,7 +94,7 @@ class BeyonderLogic(BaseLogic):
         self.botlog.upseq(path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id, new_path_name=old_path.name, new_path_id=old_path.id, new_seq=old_seq.number, new_seq_id=old_seq.id, **self.log_kwargs)
         return AnswerRedactSeq(user=await self.query_body(), 
                            new=Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name),
-                           old=Sequence(seq=old_seq.number, number=old_seq.number, path=old_path.name),
+                           old=Sequence(seq=old_seq.name, number=old_seq.number, path=old_path.name),
                            operation='up')
     
     async def downseq(self, new_seq_number: int | None = None, path_name: str | None = None):
@@ -122,7 +122,7 @@ class BeyonderLogic(BaseLogic):
         self.botlog.downseq(path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id, new_path_name=old_path.name, new_path_id=old_path.id, new_seq=old_seq.number, new_seq_id=old_seq.id, **self.log_kwargs)
         return AnswerRedactSeq(user=await self.query_body(), 
                            new=(Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name) if user.beyonder else None),
-                           old=Sequence(seq=old_seq.number, number=old_seq.number, path=old_path.name),
+                           old=Sequence(seq=old_seq.name, number=old_seq.number, path=old_path.name),
                            operation='down')   
 
     async def time_info(self):
