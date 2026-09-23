@@ -6,22 +6,22 @@ from app.db.models.organ import OrganDB
 NOT_DEFAULT = object()
 
 def is_int(x, parametr_tag, parametr_name):
-    if isinstance(x, int):
+    if type(x) is int:
         return x
     raise ParametrValidateError(parametr_tag=parametr_tag, parametr_name=parametr_name, value=x, parametr_type='числом')
 
 def is_str(x, parametr_tag, parametr_name):
-    if isinstance(x, str):
+    if type(x) is str:
         return x
     raise ParametrValidateError(parametr_tag=parametr_tag, parametr_name=parametr_name, value=x, parametr_type='строкой')
 
 def is_dict(x, parametr_tag, parametr_name):
-    if isinstance(x, dict):
+    if type(x) is dict:
         return x
     raise ParametrValidateError(parametr_tag=parametr_tag, parametr_name=parametr_name, value=x, parametr_type='словарем')
 
 def is_bool(x, parametr_tag, parametr_name):
-    if isinstance(x, bool):
+    if type(x) is bool:
         return x
     raise ParametrValidateError(parametr_tag=parametr_tag, parametr_name=parametr_name, value=x, parametr_type='bool-типа')
 
