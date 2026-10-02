@@ -2,7 +2,7 @@ from sqlalchemy import ForeignKey, Integer, ARRAY, BigInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 from datetime import datetime
-    
+
 class SequenceDB(Base):
     name: Mapped[str]
     number: Mapped[int]
@@ -15,6 +15,7 @@ class PathDB(Base):
     sequence_datas: Mapped[list['SequenceDB']] = relationship('SequenceDB', uselist=True, lazy='select', back_populates='path', cascade='all')
     emodzi: Mapped[str | None] = mapped_column(default=None)
     custom_emodzi_id: Mapped[str | None] = mapped_column(default=None)
+    god: Mapped[SequenceDB] = relationship('SequenceDB', uselist=False, lazy='joined', primaryjoin="and_(foreign(PathDB.id) == SequenceDB.path_id, SequenceDB.number == 0)", viewonly=True)
 
     @property
     def sequences(self):
@@ -22,7 +23,11 @@ class PathDB(Base):
 
     @property
     def name(self):
-        return self.sequences.get(0).name
+        return self.god.name
+
+    @property
+    def group(self):
+        return self.ga.group
 
 class GreatAncientDB(Base):
     name: Mapped[str]
@@ -67,5 +72,5 @@ class BeyonderDB(Base):
 
     @property
     def path_name(self):
-        return self.seq.path.sequences.get(0).name
+        return self.seq.path.god.name
 

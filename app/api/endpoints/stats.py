@@ -7,7 +7,7 @@ from app.validate.api.stats import AnswerAllStats
 
 stats_router = APIRouter(prefix='/stats', tags=['stats'])
 
-@stats_router.get('/all', tags=['stats'], operation_id='stats_all', response_model=AnswerAllStats)
+@stats_router.get('/all', response_model=AnswerAllStats)
 async def stats_all(              
                      session = Depends(get_session())
                      ):

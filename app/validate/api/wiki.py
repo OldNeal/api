@@ -37,9 +37,9 @@ class AnswerPathFullInfo(AnswerPathInfo):
 
     @classmethod
     def to_query(cls, data: PathDB):
-        ga = AnswerGAInfo(name=data.ga.name, ga_id=data.ga.id, group=data.ga.group, emodzi=data.ga.emodzi, custom_emodzi_id=data.ga.custom_emodzi_id)
+        ga = AnswerGAInfo(name=data.ga.name, ga_id=data.ga.id, group=data.group, emodzi=data.ga.emodzi, custom_emodzi_id=data.ga.custom_emodzi_id)
         seqs = [AnswerSeqInfo(seq_id=s.id, number=s.number, name=s.name, path_id=data.id) for s in data.sequence_datas]
-        return cls(ga=ga, ga_id=data.ga.id, seqs=seqs, name=data.name, group=data.ga.group, path_id=data.id, emodzi=data.emodzi, custom_emodzi_id=data.custom_emodzi_id)
+        return cls(ga=ga, ga_id=data.ga.id, seqs=seqs, name=data.name, group=data.group, path_id=data.id, emodzi=data.emodzi, custom_emodzi_id=data.custom_emodzi_id)
 
 class AnswerGAFullInfo(AnswerGAInfo):
     paths: list[AnswerPathInfo]
@@ -81,7 +81,7 @@ class AnswerPathSearchInfo(AnswerBody):
     @classmethod
     def to_query(cls, search_value: str, paths: list[PathDB]):
         if paths:
-            paths = [AnswerPathInfo(name=p.name, path_id=p.id, group=p.ga.group, emodzi=p.emodzi, custom_emodzi_id=p.custom_emodzi_id) for p in paths]
+            paths = [AnswerPathInfo(name=p.name, path_id=p.id, group=p.group, emodzi=p.emodzi, custom_emodzi_id=p.custom_emodzi_id) for p in paths]
             return cls(search_value=search_value, paths=paths)
         return cls(search_value=search_value)
 
@@ -118,7 +118,7 @@ class AnswerAllPathInfo(AnswerBody):
     @classmethod
     def to_query(cls, paths: list[PathDB]):
         if paths:
-            paths = [AnswerPathInfo(name=p.name, path_id=p.id, group=p.ga.group, emodzi=p.emodzi, custom_emodzi_id=p.custom_emodzi_id) for p in paths]
+            paths = [AnswerPathInfo(name=p.name, path_id=p.id, group=p.group, emodzi=p.emodzi, custom_emodzi_id=p.custom_emodzi_id) for p in paths]
             return cls(paths=paths)
         return cls()
 

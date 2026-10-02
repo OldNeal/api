@@ -1,12 +1,16 @@
 from app.logic.base import BaseLogic
 from datetime import datetime, timedelta
-from app.exception.beyonder import SeqDontExistException, UpseqNotComeException, ALreadyBeyonderException, PathDontEnterException
+from app.exception.beyonder import SeqDontExistException, UpseqNotComeException, ALreadyBeyonderException, PathDontEnterException, SeqBusyException
 from app.exception.wiki import PathDontSearchException
 from app.validate.api.beyonder import (AnswerTimeReplace, 
                                        AnswerTimeRedact, 
                                        AnswerRedactSeq, 
                                        AnswerTimeInfo,
-                                       Sequence)
+                                       Sequence,
+                                       AnswerBeyonderList,
+                                       AnswerBeyonderInfo,
+                                       AnswerUserBody,
+                                       AnswerPathInfo,)
 upseq_time = {
   9:'',
   8:7,
@@ -29,6 +33,10 @@ class BeyonderLogic(BaseLogic):
         if seq > 9 or seq < -1:
             raise SeqDontExistException(seq=seq)
         return seq
+
+    async def info(self):
+        beyonder = await self.get_user()
+        return AnswerBeyonderInfo(user=self.return_query_body(beyonder)).to_query(beyonder)
 
     async def drink(self, path_name: str | None = None, path_id: int | None = None, seq: int = 9):
         if seq < 9:
@@ -54,7 +62,7 @@ class BeyonderLogic(BaseLogic):
         if seq == -1:
             new_bndr |= {
                 'ga':path.ga,
-                'seq':path.sequences.get(0), 
+                'seq':path.god, 
             }
         user.beyonder = await self.dao.beyonder.add(new_bndr)
         await self.dao.flush()
@@ -82,9 +90,15 @@ class BeyonderLogic(BaseLogic):
             path = user.beyonder.seq.path
         if path == None:
             raise PathDontSearchException(path_name=path_name)
+        if new_seq_number == 0:
+            if await self.dao.beyonder.query_by_path_id(path.id, new_seq_number):
+                raise SeqBusyException(seq=new_seq_number, path_id=path.id)
+        if new_seq_number == -1:
+            if await self.dao.beyonder.query_ga_by_ga_id(path.ga_id):
+                raise SeqBusyException(seq=new_seq_number, path_id=path.id)
         if new_seq_number < 0:
             user.beyonder.ga = path.ga
-            new_seq = path.sequences.get(0)
+            new_seq = path.god
             user.beyonder.seq = new_seq
         else:
             new_seq = path.sequences.get(new_seq_number)
@@ -159,4 +173,20 @@ class BeyonderLogic(BaseLogic):
         user.beyonder = None
         await self.dao.flush()
         self.botlog.kill(old_beyonder.path_name, old_beyonder.seq.path_id, old_beyonder.seq.number, old_beyonder.seq.id, **self.log_kwargs)
-        return self.return_query_body(user)
+        return AnswerUserBody(user=self.return_query_body(user))
+
+    async def list(self, path_id: int):
+        beyonders = await self.dao.user.get_beyonders_by_path_id(path_id)
+        ga = await self.dao.user.get_ga_by_path_id(path_id)
+        path = await self.dao.path.query_by_id(path_id)
+        return AnswerBeyonderList(
+            path=AnswerPathInfo(
+                group=path.group, 
+                name=path.name, 
+                path_id=path.id, 
+                emodzi=path.emodzi, 
+                custom_emodzi_id=path.custom_emodzi_id
+            ),
+            ga=AnswerBeyonderInfo(user=self.return_query_body(ga)).to_query(ga) if ga else None,
+            beyonders=[AnswerBeyonderInfo(user=self.return_query_body(bndr)).to_query(bndr) for bndr in sorted([bndr for bndr in beyonders if bndr.beyonder.ga is None], key=lambda x: x.beyonder.seq.number)]
+            )

@@ -10,6 +10,7 @@ from datetime import datetime, date
 
 class UserDAO(BaseDAO[UserDB]):
     model = UserDB
+    load = [joinedload(UserDB.beyonder).joinedload(BeyonderDB.seq).joinedload(SequenceDB.path).joinedload(PathDB.god)]
 
     async def query_by_tg_id(self, tg_id: int):
         return await self.find_one_or_none({'tg_id':tg_id})
@@ -32,6 +33,24 @@ class UserDAO(BaseDAO[UserDB]):
         except SQLAlchemyError as e:
             raise
 
+    async def get_beyonders_by_path_id(self, path_id: int):
+        try:
+            query = select(self.model).join(BeyonderDB).join(SequenceDB).filter_by(path_id=path_id).options(joinedload(self.model.beyonder).joinedload(BeyonderDB.seq).joinedload(SequenceDB.path).joinedload(PathDB.god))
+            result = await self.session.execute(query)
+            record = result.scalars().all()
+            return record
+        except SQLAlchemyError as e:
+            raise
+
+    async def get_ga_by_path_id(self, path_id: int):
+        try:
+            subquery = select(PathDB.ga_id).filter_by(id=path_id).scalar_subquery()
+            query = select(self.model).join(BeyonderDB).filter_by(ga_id=subquery).options(joinedload(self.model.beyonder).joinedload(BeyonderDB.seq).joinedload(SequenceDB.path).joinedload(PathDB.god))
+            result = await self.session.execute(query)
+            record = result.scalar_one_or_none()
+            return record
+        except SQLAlchemyError as e:
+            raise
 
 class ChatDAO(BaseDAO[ChatDB]):
     model = ChatDB
@@ -57,13 +76,40 @@ class BeyonderDAO(BaseDAO[BeyonderDB]):
     async def query_by_user_id(self, user_id: int):
         return await self.find_one_or_none({'user_id':user_id})
 
+    async def query_many_by_path_id(self, path_id: int):
+        try:
+            query = select(self.model).join(SequenceDB).filter_by(path_id=path_id)
+            result = await self.session.execute(query)
+            record = result.scalars().all()
+            return record
+        except SQLAlchemyError as e:
+            raise
+
+    async def query_by_path_id(self, path_id: int, seq: int):
+        try:
+            query = select(self.model).join(SequenceDB).filter_by(path_id=path_id, number=seq)
+            result = await self.session.execute(query)
+            record = result.scalars().all()
+            return record
+        except SQLAlchemyError as e:
+            raise
+
+    async def query_ga_by_ga_id(self, ga_id: int):
+        try:
+            query = select(self.model).filter_by(ga_id=ga_id)
+            result = await self.session.execute(query)
+            record = result.scalar_one_or_none()
+            return record
+        except SQLAlchemyError as e:
+            raise
+
 class PathDAO(BaseDAO[PathDB]):
     model = PathDB
     load = [selectinload(model.sequence_datas)]
 
     async def query_by_group(self, group: str):
         try:
-            query = select(self.model).join(GreatAncientDB).filter_by(group=group).options(selectinload(self.model.sequence_datas))
+            query = select(self.model).join(GreatAncientDB).filter_by(group=group)
             result = await self.session.execute(query)
             record = result.scalars().all()
             return record
@@ -72,7 +118,7 @@ class PathDAO(BaseDAO[PathDB]):
 
     async def query_by_name(self, name: str):
         try:
-            query = select(self.model).join(SequenceDB).where(SequenceDB.name.ilike(name)).options(selectinload(self.model.sequence_datas))
+            query = select(self.model).join(SequenceDB).where(SequenceDB.name.ilike(name))
             result = await self.session.execute(query)
             record = result.scalars().first()
             return record
@@ -81,7 +127,7 @@ class PathDAO(BaseDAO[PathDB]):
 
     async def search_by_name(self, name: str):
         try:
-            query = select(self.model).join(SequenceDB).where(or_(*[func.lower(SequenceDB.name).contains(f'%{n}%') for n in name.lower().split(' ')])).options(selectinload(self.model.sequence_datas))
+            query = select(self.model).join(SequenceDB).where(or_(*[func.lower(SequenceDB.name).contains(f'%{n}%') for n in name.lower().split(' ')]))
             result = await self.session.execute(query)
             record = result.scalars().all()
             return record
