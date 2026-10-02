@@ -1,5 +1,5 @@
 alembic
-sqlalchemy
+sqlalchemy[asyncio]
 pydantic
 pydantic-settings
 asyncpg
