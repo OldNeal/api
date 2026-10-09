@@ -2,6 +2,7 @@ import loguru, sys, inspect
 from functools import wraps
 from datetime import time
 from typing import Literal
+from app.logging.paths import LogPaths, PurePath
 
 def log_filter(no: int):
     return lambda r: r['level'].no == no
@@ -26,9 +27,10 @@ class BotLog:
             }
         ] + [
             {
-            "sink":f'logs/base/{self.levels[0].name.lower()}' + '_{time:YYYY-MM-DD}.log',
-            'rotation':'7 day',
-            'retention':'30 days',
+            "sink": LogPaths.base / PurePath(f'{self.levels[0].name.lower()}' + '_{time:YYYY-MM-DD}.log'),
+            'rotation':"10 MB",      # новый файл каждые 10 МБ
+            'retention':"30 days",    # хранить логи 7 дней
+            'compression':"zip",
             'filter':log_filter(self.levels[0].no),
             'level':self.levels[0].name, 
             'enqueue':True,
@@ -37,9 +39,10 @@ class BotLog:
             'serialize':True
             }, 
             {
-            "sink":f'logs/base/api' + '_{time:YYYY-MM-DD}.log',
-            'rotation':'7 day',
-            'retention':'30 days',
+            "sink": LogPaths.base / PurePath('api_{time:YYYY-MM-DD}.log'),
+            'rotation':"10 MB",      # новый файл каждые 10 МБ
+            'retention':"30 days",    # хранить логи 7 дней
+            'compression':"zip",
             'level':'DEBUG', 
             'enqueue':True,
             'format':self.log_format,
@@ -47,9 +50,10 @@ class BotLog:
             'serialize':True
             }, 
             {
-            "sink":f'logs/base/warning' + '_{time:YYYY-MM-DD}.log',
-            'rotation':'30 day',
-            'retention':'120 days',
+            "sink": LogPaths.base / PurePath('warning_{time:YYYY-MM-DD}.log'),
+            'rotation':"10 MB",      # новый файл каждые 10 МБ
+            'retention':"90 days",    # хранить логи 7 дней
+            'compression':"zip",
             'level':'WARNING', 
             'enqueue':True,
             'format':self.log_format,
@@ -57,7 +61,7 @@ class BotLog:
             'serialize':True
             }, 
             {
-            "sink":f'logs/base/error' + '_{time:YYYY-MM-DD}.log',
+            "sink": LogPaths.base / PurePath('error_{time:YYYY-MM-DD}.log'),
             'level':'ERROR', 
             'enqueue':True,
             'format':self.log_format,
@@ -66,23 +70,29 @@ class BotLog:
             }, 
         ] + [
             {
-            "sink":f'logs/beyonder/{beyonder_logs.name.lower()}' + '_{time:YYYY-MM-DD}.log',
+            "sink": LogPaths.beyonder / PurePath(f'{beyonder_logs.name.lower()}' + '_{time:YYYY-MM-DD}.log'),
             'filter':log_filter(beyonder_logs.no),
             'level':f'{beyonder_logs.name}', 
             'enqueue':True,
             'format':self.log_format,
             'catch':True,
-            'serialize':True
+            'serialize':True,
+            'rotation':"10 MB",      # новый файл каждые 10 МБ
+            'retention':"180 days",    # хранить логи 7 дней
+            'compression':"zip",
             } for beyonder_logs in self.beyonder_handlers
         ] + [
             {
-            "sink":f'logs/organ/{organ_logs.name.lower()}' + '_{time:YYYY-MM-DD}.log',
+            "sink": LogPaths.organ / PurePath(f'{organ_logs.name.lower()}' + '_{time:YYYY-MM-DD}.log'),
             'filter':log_filter(organ_logs.no),
             'level':f'{organ_logs.name}', 
             'enqueue':True,
             'format':self.log_format,
             'catch':True,
-            'serialize':True
+            'serialize':True,
+            'rotation':"10 MB",      # новый файл каждые 10 МБ
+            'retention':"180 days",    # хранить логи 7 дней
+            'compression':"zip",
             } for organ_logs in self.organ_handlers
         ]
     

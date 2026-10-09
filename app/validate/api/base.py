@@ -50,7 +50,7 @@ class AnswerBaseInfo(AnswerUserBody):
         if data:
             if data.beyonder and beyonder:
                 self.beyonder = BeyonderInfo(
-                    path_name = data.beyonder.seq.path.sequences.get(0).name,
+                    path_name = data.beyonder.seq.path.god.name,
                     seq = data.beyonder.seq_number,
                     seq_name = data.beyonder.seq_name,
                     emodzi=data.beyonder.emodzi, 
@@ -79,3 +79,6 @@ class ForButtons(AnswerBody):
 class AnswerMain(AnswerBody):
     message: str
     version: str
+
+class AnswerLogFileNames(AnswerBody):
+    names: list[str]

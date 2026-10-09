@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi.routing import APIRoute
 
 # Загружаем .env из корня проекта
-load_dotenv(Path(__file__).parent / '.env.server')
+load_dotenv(Path(__file__).parent / '.env')
 
 class Settings:
     DB_USER = os.getenv('DB_USER')

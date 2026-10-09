@@ -10,13 +10,16 @@ class BeyonderService(BaseService):
         return await self.logic.drink(path_name, path_id, seq)
     
     async def info(self):
-        return await self.logic.time_info()
-
+        return await self.logic.info()
+    
     async def upseq(self, new_seq: int | None = None, path_name: str | None = None):
         return await self.logic.upseq(new_seq, path_name)
     
     async def downseq(self, new_seq: int | None = None, path_name: str | None = None):
         return await self.logic.downseq(new_seq, path_name)
+    
+    async def time_info(self):
+        return await self.logic.time_info()
     
     async def replace_time(self, new_time):
         return await self.logic.replace_time(new_time)
@@ -26,3 +29,6 @@ class BeyonderService(BaseService):
 
     async def kill(self):
         return await self.logic.kill()
+
+    async def list(self, path_id: int):
+        return await self.logic.list(path_id)
