@@ -18,7 +18,8 @@ class UserDAO(BaseDAO[UserDB]):
     async def get_organ_owner_by_organ_id(self, organ_id: int):
         try:
             query = select(self.model).join(MemberDB).filter_by(organ_id=organ_id, rank=0)
-            query = self.load_options(query)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalar_one_or_none()
             return record
@@ -28,7 +29,8 @@ class UserDAO(BaseDAO[UserDB]):
     async def get_members_by_organ_id(self, organ_id: int):
         try:
             query = select(self.model).join(MemberDB).filter_by(organ_id=organ_id)
-            query = self.load_options(query)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalars().all()
             return record
@@ -38,7 +40,8 @@ class UserDAO(BaseDAO[UserDB]):
     async def get_beyonders_by_path_id(self, path_id: int):
         try:
             query = select(self.model).join(BeyonderDB).join(SequenceDB).filter_by(path_id=path_id)
-            query = self.load_options(query)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalars().all()
             return record
@@ -49,7 +52,8 @@ class UserDAO(BaseDAO[UserDB]):
         try:
             subquery = select(PathDB.ga_id).filter_by(id=path_id).scalar_subquery()
             query = select(self.model).join(BeyonderDB).filter_by(ga_id=subquery)
-            query = self.load_options(query)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalar_one_or_none()
             return record
@@ -83,7 +87,8 @@ class BeyonderDAO(BaseDAO[BeyonderDB]):
     async def query_many_by_path_id(self, path_id: int):
         try:
             query = select(self.model).join(SequenceDB).filter_by(path_id=path_id)
-            query = self.load_options(query)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalars().all()
             return record
@@ -93,7 +98,8 @@ class BeyonderDAO(BaseDAO[BeyonderDB]):
     async def query_by_path_id(self, path_id: int, seq: int):
         try:
             query = select(self.model).join(SequenceDB).filter_by(path_id=path_id, number=seq)
-            query = self.load_options(query)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalars().all()
             return record
@@ -103,7 +109,8 @@ class BeyonderDAO(BaseDAO[BeyonderDB]):
     async def query_ga_by_ga_id(self, ga_id: int):
         try:
             query = select(self.model).filter_by(ga_id=ga_id)
-            query = self.load_options(query)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalar_one_or_none()
             return record
@@ -117,7 +124,8 @@ class PathDAO(BaseDAO[PathDB]):
     async def query_by_group(self, group: str):
         try:
             query = select(self.model).join(GreatAncientDB).filter_by(group=group)
-            query = self.load_options(query)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalars().all()
             return record
@@ -127,7 +135,8 @@ class PathDAO(BaseDAO[PathDB]):
     async def query_by_name(self, name: str):
         try:
             query = select(self.model).join(SequenceDB).where(SequenceDB.name.ilike(name))
-            query = self.load_options(query)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalars().first()
             return record
@@ -137,7 +146,8 @@ class PathDAO(BaseDAO[PathDB]):
     async def search_by_name(self, name: str):
         try:
             query = select(self.model).join(SequenceDB).where(or_(*[func.lower(SequenceDB.name).contains(f'%{n}%') for n in name.lower().split(' ')]))
-            query = self.load_options(query)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalars().all()
             return record
@@ -167,7 +177,8 @@ class GreatAncientDAO(BaseDAO[GreatAncientDB]):
     async def search_by_name(self, name: str):
         try:
             query = select(self.model).where(or_(*[func.lower(self.model.name).contains(f'%{n}%') for n in name.split(' ')]))
-            query = self.load_options(query)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalars().all()
             return record
@@ -177,7 +188,8 @@ class GreatAncientDAO(BaseDAO[GreatAncientDB]):
     async def gropus(self):
         try:
             query = select(self.model.group)
-            query = self.load_options(query)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalars().all()
             return list(set(record))
@@ -196,7 +208,8 @@ class OrganDAO(BaseDAO[OrganDB]):
         """Получить количество участников в организации"""
         try:
             query = select(self.model).filter_by(id=organ_id)
-            query = self.load_options(query)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalars().all().count()
             return record
@@ -206,7 +219,8 @@ class OrganDAO(BaseDAO[OrganDB]):
     async def search_by_name(self, name: str):
         try:
             query = select(self.model).where(or_(*[func.lower(self.model.name).contains(f'%{n}%') for n in name.lower().split(' ')]))
-            query = self.load_options(query)
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
             result = await self.session.execute(query)
             record = result.scalars().all()
             return record

@@ -11,6 +11,7 @@ from app.validate.api.beyonder import (AnswerTimeReplace,
                                        AnswerBeyonderInfo,
                                        AnswerUserBody,
                                        AnswerPathInfo,)
+
 upseq_time = {
   9:'',
   8:7,
@@ -66,7 +67,7 @@ class BeyonderLogic(BaseLogic):
             }
         user.beyonder = await self.dao.beyonder.add(new_bndr)
         await self.dao.flush()
-        self.botlog.drink(path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id, **self.log_kwargs)
+        self.botlog.drink(path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id)
         return AnswerRedactSeq(user=await self.query_body(), 
                            new=Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name),
                            operation='add')
@@ -105,7 +106,7 @@ class BeyonderLogic(BaseLogic):
             user.beyonder.seq = new_seq
         user.beyonder.next_upseq = self.get_upseq_time(user.beyonder.seq_number)
         await self.dao.flush()
-        self.botlog.upseq(path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id, new_path_name=old_path.name, new_path_id=old_path.id, new_seq=old_seq.number, new_seq_id=old_seq.id, **self.log_kwargs)
+        self.botlog.upseq(path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id, new_path_name=old_path.name, new_path_id=old_path.id, new_seq=old_seq.number, new_seq_id=old_seq.id)
         return AnswerRedactSeq(user=await self.query_body(), 
                            new=Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name),
                            old=Sequence(seq=old_seq.name, number=old_seq.number, path=old_path.name),
@@ -133,7 +134,7 @@ class BeyonderLogic(BaseLogic):
             user.beyonder.ga = None
         user.beyonder.next_upseq = self.get_upseq_time(user.beyonder.seq_number)
         await self.dao.flush()
-        self.botlog.downseq(path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id, new_path_name=old_path.name, new_path_id=old_path.id, new_seq=old_seq.number, new_seq_id=old_seq.id, **self.log_kwargs)
+        self.botlog.downseq(path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id, new_path_name=old_path.name, new_path_id=old_path.id, new_seq=old_seq.number, new_seq_id=old_seq.id)
         return AnswerRedactSeq(user=await self.query_body(), 
                            new=(Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name) if user.beyonder else None),
                            old=Sequence(seq=old_seq.name, number=old_seq.number, path=old_path.name),
@@ -149,7 +150,7 @@ class BeyonderLogic(BaseLogic):
         old_time = user.beyonder.next_upseq
         user.beyonder.next_upseq = new_time
         await self.dao.flush()
-        self.botlog.time(old_time, new_time, **self.log_kwargs)
+        self.botlog.time(old_time, new_time)
         return AnswerTimeReplace(user=await self.query_body(),old_time=old_time, new_time=user.beyonder.next_upseq)
  
     async def edit_time(self, delta: timedelta, operator: str):
@@ -162,7 +163,7 @@ class BeyonderLogic(BaseLogic):
             case '+':
                 user.beyonder.next_upseq += delta
         await self.dao.flush()
-        self.botlog.time(old_time, user.beyonder.next_upseq, **self.log_kwargs)
+        self.botlog.time(old_time, user.beyonder.next_upseq)
         return AnswerTimeRedact(user=await self.query_body(),old_time=old_time, new_time=user.beyonder.next_upseq, seconds=delta.total_seconds(), operator=operator)
 
     async def kill(self):
@@ -172,7 +173,7 @@ class BeyonderLogic(BaseLogic):
         old_beyonder = user.beyonder
         user.beyonder = None
         await self.dao.flush()
-        self.botlog.kill(old_beyonder.path_name, old_beyonder.seq.path_id, old_beyonder.seq.number, old_beyonder.seq.id, **self.log_kwargs)
+        self.botlog.kill(old_beyonder.path_name, old_beyonder.seq.path_id, old_beyonder.seq.number, old_beyonder.seq.id)
         return AnswerUserBody(user=self.return_query_body(user))
 
     async def list(self, path_id: int):

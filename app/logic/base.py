@@ -10,8 +10,7 @@ class BaseLogic:
         self.tg_id = tg_id
         self.purpose_tg_id = purpose_tg_id or tg_id
         self.is_admin = is_admin
-        self.botlog = botlog
-        self.log_kwargs = {'purpose_tg_id':purpose_tg_id}
+        self.botlog = botlog.bind(purpose_tg_id=purpose_tg_id)
 
     def check_is_not_none(self, *objs):
         for obj in objs:

@@ -180,6 +180,10 @@ class BotLog:
                 return sync_wrapped
         return decorator
 
+    def bind(self, **kwargs):
+        self.logger = self.logger.bind(**kwargs)
+        return self
+
     def query(self, url: str, method: str, status_code: int, **kwargs):
         self.logger.log('QUERY', f'{method} {url} {status_code}', **kwargs)
         
@@ -221,7 +225,7 @@ class BotLog:
     def kill(self, old_path_name: str, old_path_id: int, old_seq: int, old_seq_id: int, **kwargs):
         self.logger.log(
             'KILL', f'Потерял контроль', 
-            **kwargs | {'old_path_name':old_path_name, 'old_path_id':old_path_id, 'old_seq':old_seq, 'old_seq_id': old_seq_id})
+            **kwargs | {'old_path_name':old_path_name, 'old_path_id':old_path_id, 'old_seq':old_seq, 'old_seq_id': old_seq_id,})
 
     def time(self, old_time: str, new_time: str, **kwargs):
         self.logger.log(

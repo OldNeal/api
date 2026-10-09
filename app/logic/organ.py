@@ -266,7 +266,7 @@ class OrganLogic(BaseLogic):
         organ.members.remove(user.member)
         await self.dao.commit()
         self.log_kwargs = {'organ_name':organ.name, 'organ_id':organ.id}
-        self.botlog.organ_exit(old_rank=user.member.rank, **self.log_kwargs)
+        self.botlog.organ_exit(old_rank=user.member.rank)
         return await self.return_organ_info(user, organ)
     
     async def create(self, name: str):
@@ -293,7 +293,7 @@ class OrganLogic(BaseLogic):
         self.dao.organ.update_obj(user.member.organ, user.member.organ.setting)
         await self.dao.flush()
         self.log_kwargs = {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
-        self.botlog.organ_setting(old_setting=old_setting, new_setting=setting.values, **self.log_kwargs)
+        self.botlog.organ_setting(old_setting=old_setting, new_setting=setting.values)
         return AnswerOrganSetting(user=self.return_query_body(user), settings=setting.validate)
     
     async def settings_default(self, default: OrganSettingDefault):
@@ -318,7 +318,7 @@ class OrganLogic(BaseLogic):
             raise
         await self.dao.flush()
         self.log_kwargs = {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
-        self.botlog.organ_setting_default(old_setting=old_setting, **self.log_kwargs)
+        self.botlog.organ_setting_default(old_setting=old_setting)
         return AnswerOrganSetting(user=self.return_query_body(user), settings=setting.validate)
 
 
@@ -338,7 +338,7 @@ class OrganLogic(BaseLogic):
         self.is_exist_rank(purpose.member.rank, user.member.organ)
         await self.dao.flush()
         self.log_kwargs = self.log_kwargs | {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
-        self.botlog.organ_rank(old_rank=old_rank, new_rank=purpose.member.rank, **self.log_kwargs)
+        self.botlog.organ_rank(old_rank=old_rank, new_rank=purpose.member.rank)
         return AnswerRedactRank(user=self.return_query_body(purpose), new_rank=purpose.member.rank, old_rank=old_rank)
     
     async def kick(self):
@@ -350,7 +350,7 @@ class OrganLogic(BaseLogic):
         purpose.member.organ.members.remove(purpose.member)
         await self.dao.flush()
         self.log_kwargs = self.log_kwargs | {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
-        self.botlog.organ_kick(old_rank=old_rank, **self.log_kwargs)
+        self.botlog.organ_kick(old_rank=old_rank)
         return await self.return_organ_info(purpose, organ)
     
     async def titul_redact(self, titul: str | None = None):
@@ -359,7 +359,7 @@ class OrganLogic(BaseLogic):
         purpose.member.titul = titul
         await self.dao.flush()
         self.log_kwargs = self.log_kwargs | {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
-        self.botlog.organ_titul(old_titul=old_titul, new_titul=purpose.member.titul, **self.log_kwargs)
+        self.botlog.organ_titul(old_titul=old_titul, new_titul=purpose.member.titul)
         return AnswerRedactTitul(user=self.return_query_body(purpose), new_titul=titul, old_titul=old_titul)
 
     async def capture(self):
@@ -368,7 +368,7 @@ class OrganLogic(BaseLogic):
         old_rank = user.member.rank
         await self.dao.flush()
         self.log_kwargs = {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
-        self.botlog.organ_rank(old_rank=old_rank, new_rank=user.member.rank, **self.log_kwargs)
+        self.botlog.organ_rank(old_rank=old_rank, new_rank=user.member.rank)
         return await self.info()
     
     async def give(self):
@@ -379,8 +379,8 @@ class OrganLogic(BaseLogic):
         old_rank_purpose = purpose.member.rank
         await self.dao.flush()
         self.log_kwargs = self.log_kwargs | {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
-        self.botlog.organ_rank(old_rank=old_rank, new_rank=user.member.rank, **self.log_kwargs)
-        self.botlog.organ_rank(old_rank=old_rank_purpose, new_rank=purpose.member.rank, **self.log_kwargs)
+        self.botlog.organ_rank(old_rank=old_rank, new_rank=user.member.rank)
+        self.botlog.organ_rank(old_rank=old_rank_purpose, new_rank=purpose.member.rank)
         return AnswerOrganGive(
             user=await self.query_body(self.tg_id),
             purpose=await self.return_member_info(user, purpose)

@@ -17,10 +17,6 @@ class QueryBody(BaseBody):
     request_id: str | None = None
     chat_id: int | None = None
 
-    @property
-    def enter_body(self):
-        return True if self.username != None and self.fullname != None else False 
-
 class AnswerBody(BaseAPIValidate):
     pass
 

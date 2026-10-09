@@ -13,8 +13,7 @@ class UpdateUserInfoMidlware(BaseHTTPMiddleware):
         try:
             body = await request.json()
             body = QueryBody(**body)
-            if body.enter_body:
-                user = await check_user(**body.model_dump())
+            await check_user(**body.model_dump())
             if body.chat_id:
                 context = {'chat_id':body.chat_id} | context
             if body.request_id:
