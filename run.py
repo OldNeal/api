@@ -21,7 +21,6 @@ app = FastAPI(
     openapi_url=settings.openapi_url  
 )
 
-
 app.include_router(main_router)
 app.add_middleware(UpdateUserInfoMidlware)
 

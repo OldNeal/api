@@ -1,7 +1,7 @@
 from typing import Generic, TypeVar
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete, func, join, or_, all_, and_, any_
+from sqlalchemy import select, update, delete, func, join, or_, all_, and_, any_, Select
 from sqlalchemy.orm import selectinload, joinedload
 from app.db.base import Base
 from datetime import datetime, date
@@ -16,6 +16,11 @@ class BaseDAO(Generic[T]):
         super().__init__()
         self.session = session
 
+    def load_options(self, query: Select):
+        if self.load and len(self.load) > 0:
+            return query.options(*self.load)
+        return query
+
     async def count(self, filter: dict = {}):
         try:
             query = select(func.count()).select_from(self.model).filter_by(**filter)
@@ -28,8 +33,7 @@ class BaseDAO(Generic[T]):
         # Найти запись по ID
         try:
             query = select(self.model).filter_by(id=data_id)
-            if self.load and len(self.load) > 0:
-                query = query.options(*self.load)
+            query = self.load_options(query)
             result = await self.session.execute(query)
             record = result.scalar_one_or_none()
             return record
@@ -40,8 +44,7 @@ class BaseDAO(Generic[T]):
         # Найти одну запись по фильтрам
         try:
             query = select(self.model).filter_by(**filters)
-            if self.load and len(self.load) > 0:
-                query = query.options(*self.load)
+            query = self.load_options(query)
             result = await self.session.execute(query)
             record = result.scalar_one_or_none()
             return record
@@ -51,8 +54,7 @@ class BaseDAO(Generic[T]):
     async def select_for_ids(self, ids: list[int]):
         try:
             query = select(self.model).where(self.model.id.in_(ids))
-            if self.load and len(self.load) > 0:
-                query = query.options(*self.load)
+            query = self.load_options(query)
             result = await self.session.execute(query)
             records = result.scalars().all()
             return list(records)
@@ -62,8 +64,7 @@ class BaseDAO(Generic[T]):
     async def find_for_date(self, date: date):
         try:
             query = select(self.model).filter(func.date(self.model.created_at) == date)
-            if self.load and len(self.load) > 0:
-                query = query.options(*self.load)
+            query = self.load_options(query)
             result = await self.session.execute(query)
             records = result.scalars().all()
             return list(records)
@@ -76,8 +77,7 @@ class BaseDAO(Generic[T]):
 
         try:
             query = select(self.model).filter_by(**filter_dict).order_by(**order_dict)
-            if self.load and len(self.load) > 0:
-                query = query.options(*self.load)
+            query = self.load_options(query)
             result = await self.session.execute(query)
             records = result.scalars().all()
             return list(records)
