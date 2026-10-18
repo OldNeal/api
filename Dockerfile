@@ -15,7 +15,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 RUN useradd --create-home --shell /bin/bash apiuser
-RUN mkdir -p /app/logs && chown -R apiuser:apiuser /app/logs
 
 COPY --chown=apiuser:apiuser . .
 COPY entrypoint.sh /entrypoint.sh
