@@ -184,4 +184,13 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
-*.json
+
+# jsons
+gas.json
+user.json
+paths.json
+organ.json
+beyonder.json
+
+# VS Code
+.vscode/

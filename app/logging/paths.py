@@ -5,11 +5,13 @@ class LogPaths:
     base = logs / PurePath('base/')
     beyonder = logs / PurePath('beyonder/')
     organ = logs / PurePath('organ/')
+    newspaper = logs / PurePath('newspaper/')
 
     categories = {
         'base':base,
         'beyonder':beyonder,
-        'organ':organ
+        'organ':organ,
+        'newspaper':newspaper,
     }
 
     @classmethod

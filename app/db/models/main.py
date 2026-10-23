@@ -3,6 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 from app.db.models.beyonder import BeyonderDB
 from app.db.models.organ import MemberDB
+from app.db.models.newspaper import ReaderDB
 
 class TgUserDB(Base):
     tg_id: Mapped[int] = mapped_column(BigInteger, unique=True)
@@ -22,12 +23,25 @@ class UserDB(Base):
     _name: Mapped[str | None] = mapped_column(name='name', default=None)
     is_ban: Mapped[bool] = mapped_column(default=False)
     tg_user: Mapped[TgUserDB] = relationship(TgUserDB, uselist=False, lazy='joined', primaryjoin="foreign(TgUserDB.tg_id) == UserDB.tg_id", cascade='all')
-    beyonder: Mapped[BeyonderDB | None] = relationship('BeyonderDB', uselist=False, lazy='joined', cascade='all, delete-orphan')
-    member: Mapped[MemberDB | None] = relationship('MemberDB', uselist=False, lazy='joined', cascade='all, delete-orphan')
+    beyonder: Mapped[BeyonderDB | None] = relationship('BeyonderDB', uselist=False, lazy='joined', back_populates='user', cascade='all, delete-orphan')
+    member: Mapped[MemberDB | None] = relationship('MemberDB', uselist=False, lazy='joined', back_populates='user', cascade='all, delete-orphan')
+    readers: Mapped[list['ReaderDB']] = relationship('ReaderDB', uselist=True, lazy='select', back_populates='user', cascade='all, delete-orphan')
 
     @property
     def name(self):
         return self._name if self._name else self.tg_user.fullname
+
+    @property
+    def news_papers(self):
+        return {reader.news_paper_id:reader.news_paper for reader in self.readers}
+
+    @property
+    def news_papers_where_editor(self):
+        return {reader.news_paper_id:reader.news_paper for reader in self.readers if reader.is_editor}
+
+    @property
+    def readers_by_news_paper_id(self):
+        return {reader.news_paper_id:reader for reader in self.readers}
 
 class ChatDB(Base):
     tg_id: Mapped[int | None] = mapped_column(BigInteger, unique=True, default=None)

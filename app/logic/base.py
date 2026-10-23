@@ -42,4 +42,3 @@ class BaseLogic:
     def return_query_body(self, user):
         return QueryBody(tg_id=user.tg_id, username=user.tg_user.username, fullname=user.name, is_admin=self.is_admin)
     
-

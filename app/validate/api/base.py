@@ -38,6 +38,12 @@ class MemberInfo(AnswerBody):
     rank_name: str | None = None
     login_at: str | None = None
 
+class ReaderInfo(AnswerBody):
+    news_paper_name: str | None = None
+    news_paper_id: int | None = None
+    rank: int | None = None
+    rank_name: str | None = None
+
 class AnswerBaseInfo(AnswerUserBody):
     beyonder: BeyonderInfo | None = None
     member: MemberInfo | None = None
@@ -64,13 +70,17 @@ class AnswerBaseInfo(AnswerUserBody):
 
 class ForButtons(AnswerBody):
     is_member: bool = False
+    is_reader: bool = False
     organ_id: int | None = None
+    news_paper_id: int | None = None
+
     is_redact_setting: bool = False
     is_redact_rank: bool = False
     is_redact_titul: bool = False
     is_kick: bool = False
     is_capture: bool = False
     is_give: bool = False
+    is_news: bool = False
     
 class AnswerMain(AnswerBody):
     message: str

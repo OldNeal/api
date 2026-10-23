@@ -1,0 +1,139 @@
+[
+{   
+    "tag":"hidden",
+    "type":"organ",
+    "group":"main",
+    "default_value":false,
+    "converter":"is_bool"
+},
+{
+    "tag":"closen",
+    "type":"organ",
+    "group":"main",
+    "default_value":false,
+    "converter":"is_bool"
+},
+{
+    "tag":"start_rank",
+    "type":"organ",
+    "group":"main",
+    "default_value":9,
+    "converter":"check_rank_exist",
+    "kwargs":{
+        "max_rank":9,
+        "min_rank":0
+    }
+},
+{
+    "tag":"name",
+    "type":"organ",
+    "group":"appearance",
+    "have_default_value":false,
+    "converter":"is_str"
+},
+{
+    "tag":"emodzi",
+    "type":"organ",
+    "group":"appearance",
+    "have_default_value":false,
+    "converter":"is_str"
+},
+{
+    "tag":"custom_emodzi_id",
+    "type":"organ",
+    "group":"appearance",
+    "have_default_value":false,
+    "converter":"is_str"
+},
+{
+    "tag":"description",
+    "type":"organ",
+    "group":"appearance",
+    "have_default_value":false,
+    "converter":"is_str"
+},
+{
+    "tag":"rank_names",
+    "type":"organ",
+    "group":"appearance",
+    "default_value":{
+        "9":"Новичок",
+        "8":"Участник",
+        "7":"Участник",
+        "6":"Участник",
+        "5":"Участник",
+        "4":"Старший",
+        "3":"Старший",
+        "2":"Советник",
+        "1":"Советник",
+        "0":"Глава"
+    },
+    "converter":"check_rank_names",
+    "kwargs":{
+        "max_rank":9,
+        "min_rank":0
+    }
+},
+{
+    "tag":"redact_rank",
+    "type":"organ",
+    "group":"permission",
+    "default_value":0,
+    "converter":"check_rank_exist",
+    "kwargs":{
+        "max_rank":9,
+        "min_rank":0
+    }
+},
+{
+    "tag":"redact_titul",
+    "type":"organ",
+    "group":"permission",
+    "default_value":0,
+    "converter":"check_rank_exist",
+    "kwargs":{
+        "max_rank":9,
+        "min_rank":0
+    }
+},
+{
+    "tag":"kick",
+    "type":"organ",
+    "group":"permission",
+    "default_value":0,
+    "converter":"check_rank_exist",
+    "kwargs":{
+        "max_rank":9,
+        "min_rank":0
+    }
+},
+{
+    "tag":"redact_setting",
+    "type":"organ",
+    "group":"permission",
+    "default_value":0,
+    "converter":"check_rank_exist",
+    "kwargs":{
+        "max_rank":9,
+        "min_rank":0
+    }
+},
+{
+    "tag":"name",
+    "type":"news_paper",
+    "group":"permission",
+    "have_default_value":false,
+    "converter":"is_str"
+},
+{
+    "tag":"editor_rank",
+    "type":"news_paper",
+    "group":"permission",
+    "default_value":1,
+    "converter":"check_rank_exist",
+    "kwargs":{
+        "max_rank":2,
+        "min_rank":0
+    }
+}
+]

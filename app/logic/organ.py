@@ -2,7 +2,7 @@ from app.logic.base import BaseLogic
 from app.validate.api.organ import AnswerOrganInfo, AnswerOrganGive, OrganInfo, ForButtons, AnswerAllOrganInfo, AnswerRedactRank, AnswerOrganSetting, AnswerOrganSettingValues, AnswerRedactTitul, AnswerOrganInfoDescription, AnswerOrganInfoMembers, AnswerMemberInfo, OrganSettingDefault, MemberInfo, UserDB
 from app.db.models.organ import MemberDB, OrganDB
 from app.db.models.main import UserDB
-from app.logic.setting import OrganSetting
+from app.logic.setting.base import OrganSetting
 from app.exception.organ import DontMemberError, DontEnterPurposeError, ExistRankError, ALreadyOwnerError, ExistOrganError, InOneOrganError, ALreadyMemberError, OrganPermissioError, OrganPermissionNewRankError, HiddenOrganError, ClosenOrganError, OrganPermissionPurposeRankError
 
 class OrganLogic(BaseLogic):
@@ -151,6 +151,8 @@ class OrganLogic(BaseLogic):
             )
 
     async def return_organ_info(self, user: UserDB, organ: OrganDB):
+        if organ.is_load_members:
+            await organ.awaitable_attrs.members
         return AnswerOrganInfo(
             user=self.return_query_body(user),
             organ=OrganInfo(
@@ -254,7 +256,7 @@ class OrganLogic(BaseLogic):
         user = await self.check_is_not_member()
         organ = await self.check_exist_organ(self.organ_id)
         setting = self.is_closen(organ)
-        organ.members.append(MemberDB(user_id=user.id, organ_id=organ.id, rank=setting.main.get('start_rank')))
+        user.member = MemberDB(user_id=user.id, organ_id=organ.id, rank=setting.main.get('start_rank'))
         await self.dao.flush()
         self.log_kwargs = {'organ_name':organ.name, 'organ_id':organ.id}
         self.botlog.organ_login(**self.log_kwargs)
@@ -262,17 +264,19 @@ class OrganLogic(BaseLogic):
     
     async def exit(self):
         user = await self.check_is_member()
-        organ = await self.get_organ(user.member.organ_id)
-        organ.members.remove(user.member)
-        await self.dao.commit()
+        organ = user.member.organ
+        old_rank = user.member.rank
+        user.member = None
+        await self.dao.flush()
         self.log_kwargs = {'organ_name':organ.name, 'organ_id':organ.id}
-        self.botlog.organ_exit(old_rank=user.member.rank, **self.log_kwargs)
+        self.botlog.organ_exit(old_rank=old_rank, **self.log_kwargs)
         return await self.return_organ_info(user, organ)
     
     async def create(self, name: str):
         user = await self.check_is_not_member()
         organ = await self.dao.organ.add({'name':name})
-        organ.members.append(MemberDB(user_id=user.id, organ_id=organ.id, rank=0))
+        setting = OrganSetting(organ.setting)
+        user.member = MemberDB(user_id=user.id, organ_id=organ.id, rank=setting.main.get('start_rank'))
         await self.dao.flush()
         self.log_kwargs = {'organ_name':organ.name, 'organ_id':organ.id}
         self.botlog.organ_create(**self.log_kwargs)
@@ -305,7 +309,7 @@ class OrganLogic(BaseLogic):
             user.member.organ.description = None
             user.member.organ.emodzi = None
             user.member.organ.custom_emodzi_id = None
-        elif default.group == OrganSetting.appearance.tag:
+        elif default.group == 'appearance':
             user.member.organ.setting = setting.to_default(default.group)
             default_setting = setting.model_dump_db(True)
             default_setting.pop('name')
@@ -344,14 +348,12 @@ class OrganLogic(BaseLogic):
     async def kick(self):
         user, purpose = await self.check_organ_admin_permission('kick')
         self.is_enter_purpose(user, purpose)
-        organ = user.member.organ
         old_rank = purpose.member.rank
-        await purpose.member.organ.awaitable_attrs.members
-        purpose.member.organ.members.remove(purpose.member)
+        purpose.member = None
         await self.dao.flush()
         self.log_kwargs = self.log_kwargs | {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
         self.botlog.organ_kick(old_rank=old_rank, **self.log_kwargs)
-        return await self.return_organ_info(purpose, organ)
+        return await self.return_organ_info(purpose, user.member.organ)
     
     async def titul_redact(self, titul: str | None = None):
         user, purpose = await self.check_organ_admin_permission('redact_titul')

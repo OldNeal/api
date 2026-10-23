@@ -94,6 +94,19 @@ class BotLog:
             'retention':"180 days",    # хранить логи 7 дней
             'compression':"zip",
             } for organ_logs in self.organ_handlers
+        ] + [
+            {
+            "sink": LogPaths.newspaper / PurePath(f'{newspaper_logs.name.lower()}' + '_{time:YYYY-MM-DD}.log'),
+            'filter':log_filter(newspaper_logs.no),
+            'level':f'{newspaper_logs.name}',
+            'enqueue':True,
+            'format':self.log_format,
+            'catch':True,
+            'serialize':True,
+            'rotation':"10 MB",
+            'retention':"180 days",
+            'compression':"zip",
+            } for newspaper_logs in self.newspaper_handlers
         ]
     
     def create_handlers(self):
@@ -109,7 +122,8 @@ class BotLog:
         self.base_handlers = self.create_levels_base()
         self.beyonder_handlers = self.create_levels_bndr() 
         self.organ_handlers = self.create_levels_organ()
-        return self.base_handlers + self.beyonder_handlers + self.organ_handlers
+        self.newspaper_handlers = self.create_levels_newspaper()
+        return self.base_handlers + self.beyonder_handlers + self.organ_handlers + self.newspaper_handlers
 
     def create_levels_base(self):
         return [
@@ -136,6 +150,17 @@ class BotLog:
             self.logger.level("ORGAN EXIT", no=35, color="<yellow>", icon="🚪"),
             self.logger.level("ORGAN TITUL", no=36, color="<yellow>", icon="🎖️"),
             self.logger.level("ORGAN SETTING", no=37, color="<yellow>", icon="⚙️"),
+            ]
+
+    def create_levels_newspaper(self):
+        return [
+            self.logger.level("NEWSPAPER CREATE", no=41, color="<cyan>", icon="📰"),
+            self.logger.level("NEWSPAPER SUBSCRIBE", no=42, color="<cyan>", icon="➕"),
+            self.logger.level("NEWSPAPER UNSUBSCRIBE", no=43, color="<cyan>", icon="➖"),
+            self.logger.level("NEWSPAPER RANK", no=44, color="<cyan>", icon="🎎"),
+            self.logger.level("NEWSPAPER CAPTURE", no=45, color="<cyan>", icon="👑"),
+            self.logger.level("NEWSPAPER GIVE", no=46, color="<cyan>", icon="🤝"),
+            self.logger.level("NEWSPAPER SETTING", no=47, color="<cyan>", icon="⚙️"),
             ]
  
     def decor(self, timer: bool = False, arg: bool = False, logger_kwargs: dict = {}):
@@ -282,6 +307,58 @@ class BotLog:
         self.logger.log(
             'ORGAN SETTING', f'Сбросили настройки', 
             **kwargs | {'organ_name':organ_name, 'organ_id': organ_id, 'old_setting':old_setting})
+
+    def newspaper_create(self, newspaper_name: str, newspaper_id: int, **kwargs):
+        self.logger.log(
+            'NEWSPAPER CREATE', f'Создал газету {newspaper_name}',
+            **kwargs | {'newspaper_name':newspaper_name, 'newspaper_id':newspaper_id})
+
+    def newspaper_subscribe(self, newspaper_name: str, newspaper_id: int, **kwargs):
+        self.logger.log(
+            'NEWSPAPER SUBSCRIBE', f'Подписался на газету {newspaper_name}',
+            **kwargs | {'newspaper_name':newspaper_name, 'newspaper_id':newspaper_id})
+
+    def newspaper_unsubscribe(self, newspaper_name: str, newspaper_id: int, old_rank: int, **kwargs):
+        self.logger.log(
+            'NEWSPAPER UNSUBSCRIBE', f'Отписался от газеты {newspaper_name}',
+            **kwargs | {'newspaper_name':newspaper_name, 'newspaper_id':newspaper_id, 'old_rank':old_rank})
+
+    def newspaper_rank(self, newspaper_name: str, newspaper_id: int, old_rank: int, new_rank: int, **kwargs):
+        self.logger.log(
+            'NEWSPAPER RANK', f'Изменил ранг читателя: {old_rank} >>> {new_rank}',
+            **kwargs | {'newspaper_name':newspaper_name, 'newspaper_id':newspaper_id, 'old_rank':old_rank, 'new_rank':new_rank})
+
+    def newspaper_capture(self, newspaper_name: str, newspaper_id: int, old_rank: int, **kwargs):
+        self.logger.log(
+            'NEWSPAPER CAPTURE', f'Стал автором газеты {newspaper_name}',
+            **kwargs | {'newspaper_name':newspaper_name, 'newspaper_id':newspaper_id, 'old_rank':old_rank})
+
+    def newspaper_give(
+        self,
+        newspaper_name: str,
+        newspaper_id: int,
+        old_owner_tg_id: int,
+        new_owner_tg_id: int,
+        **kwargs,
+    ):
+        self.logger.log(
+            'NEWSPAPER GIVE', f'Передал газету {newspaper_name}',
+            **kwargs | {
+                'newspaper_name':newspaper_name,
+                'newspaper_id':newspaper_id,
+                'old_owner_tg_id':old_owner_tg_id,
+                'new_owner_tg_id':new_owner_tg_id,
+            })
+
+    def newspaper_setting(self, newspaper_name: str, newspaper_id: int, old_setting: dict, new_setting: dict, **kwargs):
+        self.logger.log(
+            'NEWSPAPER SETTING', f'Изменил настройки газеты',
+            **kwargs | {'newspaper_name':newspaper_name, 'newspaper_id':newspaper_id, 'old_setting':old_setting, 'new_setting':new_setting})
+
+    def newspaper_setting_default(self, newspaper_name: str, newspaper_id: int, old_setting: dict, **kwargs):
+        self.logger.log(
+            'NEWSPAPER SETTING', f'Сбросил настройки газеты',
+            **kwargs | {'newspaper_name':newspaper_name, 'newspaper_id':newspaper_id, 'old_setting':old_setting})
         
 botlog = BotLog()
 log = botlog.logger

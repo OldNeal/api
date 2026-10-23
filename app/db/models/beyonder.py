@@ -42,6 +42,7 @@ class GreatAncientDB(Base):
 
 class BeyonderDB(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('UserDB.id'))
+    user: Mapped[Base] = relationship('UserDB', uselist=False, lazy='select', back_populates='beyonder')
     seq_id: Mapped[int | None] = mapped_column(ForeignKey('SequenceDB.id'), nullable=True)
     seq: Mapped[SequenceDB] = relationship('SequenceDB', uselist=False, lazy='joined')
     ga_id: Mapped[int | None] = mapped_column(ForeignKey('GreatAncientDB.id'), nullable=True)

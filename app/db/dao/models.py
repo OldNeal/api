@@ -2,6 +2,7 @@ from app.db.dao.base import BaseDAO, AsyncSession
 from app.db.models.main import ChatDB, UserDB, TgChatDB, TgUserDB
 from app.db.models.beyonder import BeyonderDB, PathDB, SequenceDB, GreatAncientDB
 from app.db.models.organ import OrganDB, MemberDB
+from app.db.models.newspaper import NewsPaperDB, ReaderDB
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select, update, delete, func, join, or_, all_, and_, any_
 from sqlalchemy.orm import selectinload, joinedload
@@ -201,21 +202,6 @@ class OrganDAO(BaseDAO[OrganDB]):
     model = OrganDB
     load = [selectinload(model.members)]
 
-    async def query_by_name(self, name: str):
-        return await self.find_one_or_none({'name':name})
-
-    async def get_members_count(self, organ_id: int):
-        """Получить количество участников в организации"""
-        try:
-            query = select(self.model).filter_by(id=organ_id)
-            if self.load and len(self.load) > 0:
-                query = query.options(*self.load)
-            result = await self.session.execute(query)
-            record = result.scalars().all().count()
-            return record
-        except SQLAlchemyError as e:
-            raise
-
     async def search_by_name(self, name: str):
         try:
             query = select(self.model).where(or_(*[func.lower(self.model.name).contains(f'%{n}%') for n in name.lower().split(' ')]))
@@ -238,7 +224,35 @@ class MemberDAO(BaseDAO[MemberDB]):
 
     async def get_members(self, organ_id: int):
         return await self.find_all({'organ_id':organ_id})
-    
+
+class NewsPaperDAO(BaseDAO[NewsPaperDB]):
+    model = NewsPaperDB
+    load = [selectinload(model.readers), selectinload(model.readers).selectinload(ReaderDB.user)]
+
+    async def search_by_name(self, name: str):
+        try:
+            query = select(self.model).where(or_(*[func.lower(self.model.name).contains(f'%{n}%') for n in name.lower().split(' ')]))
+            if self.load and len(self.load) > 0:
+                query = query.options(*self.load)
+            result = await self.session.execute(query)
+            record = result.scalars().all()
+            return record
+        except SQLAlchemyError as e:
+            raise
+
+class ReaderDAO(BaseDAO[ReaderDB]):
+    model = ReaderDB
+    load = [selectinload(model.user)]
+
+    async def query_by_user_id(self, user_id: int):
+        return await self.find_one_or_none({'user_id':user_id})
+
+    async def get_owner(self, organ_id: int):
+        return await self.find_one_or_none({'news_paper_id':organ_id, 'rank':0})
+
+    async def get_members(self, organ_id: int):
+        return await self.find_all({'news_paper_id':organ_id})
+
 class DAO:
     def __init__(self, session: AsyncSession):
         if type(session) != AsyncSession:
@@ -254,6 +268,8 @@ class DAO:
         self.greatancient = GreatAncientDAO(self.session)
         self.organ = OrganDAO(self.session)
         self.member = MemberDAO(self.session)
+        self.news_paper = NewsPaperDAO(self.session)
+        self.reader = ReaderDAO(self.session)
 
     async def flush(self):
         await self.session.flush()  

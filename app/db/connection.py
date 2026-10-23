@@ -1,7 +1,7 @@
 from functools import wraps
 from typing import Optional
 from sqlalchemy import text
-from app.db.base import session,  async_session_maker
+from app.db.base import async_session_maker
 
 def connection(isolation_level: Optional[str] = None, commit: bool = True):
     """
