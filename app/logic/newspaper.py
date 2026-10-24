@@ -191,7 +191,7 @@ class NewsPaperLogic(BaseLogic):
         if reader is None:
             raise ReaderError()
         return AnswerReaderInfo(
-            user=self.return_query_body(user),
+            user=self.return_query_body(purpose),
             reader=ReaderInfo(
                 news_paper_name=news_paper.name,
                 news_paper_id=news_paper.id,
