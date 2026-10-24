@@ -185,12 +185,12 @@ class NewsPaperLogic(BaseLogic):
     async def readers(self):
         user = await self.get_user(self.tg_id)
         news_paper = await self.check_exist_news_paper(self.news_paper_id)
-        readers = await self.dao.reader.get_members(news_paper.id)
+        await news_paper.awaitable_attrs.readers
         return AnswerNewsPaperInfoReaders(
             user=self.return_query_body(user),
             id=news_paper.id,
             name=news_paper.name,
-            readers=[await self.return_reader_info(reader) for reader in readers],
+            readers=[await self.return_reader_info(reader) for reader in sorted(news_paper.readers, key=lambda x: x.rank)],
         )
 
     async def reader(self):
