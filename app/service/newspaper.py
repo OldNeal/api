@@ -25,6 +25,9 @@ class NewsPaperService(BaseService):
     async def info(self):
         return await self.logic.info()
 
+    async def description(self):
+        return await self.logic.description()
+
     async def readers(self):
         return await self.logic.readers()
 

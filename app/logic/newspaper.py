@@ -3,6 +3,7 @@ from app.validate.api.newspaper import (
     AnswerAllNewsPaperInfo,
     AnswerNewsPaperInfo,
     AnswerNewsPaperInfoReaders,
+    AnswerNewsPaperInfoDescription,
     AnswerReaderInfo,
     AnswerRedactRank,
     AnswerNewsPaperGive,
@@ -29,8 +30,8 @@ class NewsPaperLogic(BaseLogic):
         super().__init__(session, tg_id, purpose_tg_id, is_admin)
         self.news_paper_id = news_paper_id
 
-    async def check_reader(self, tg_id: int, news_paper_id: int, is_check_reader: bool = True):
-        user = await self.get_user(self.tg_id)
+    async def check_reader(self, purpose_tg_id: int, news_paper_id: int, is_check_reader: bool = True):
+        user = await self.get_user(purpose_tg_id)
         await user.awaitable_attrs.readers
         is_reader = news_paper_id in user.readers_by_news_paper_id
         if is_reader and not is_check_reader:
@@ -169,6 +170,16 @@ class NewsPaperLogic(BaseLogic):
             user,
             news_paper,
             await self.return_for_buttons(user, news_paper=news_paper),
+        )
+
+    async def description(self):
+        user = await self.get_user(self.tg_id)
+        news_paper = await self.check_exist_news_paper(self.news_paper_id)
+        return AnswerNewsPaperInfoDescription(
+            user=self.return_query_body(user),
+            id=news_paper.id,
+            name=news_paper.name,
+            description=news_paper.description,
         )
 
     async def readers(self):

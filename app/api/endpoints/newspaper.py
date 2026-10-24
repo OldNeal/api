@@ -7,6 +7,7 @@ from app.validate.api.base import QueryBody
 from app.validate.api.newspaper import (
     AnswerAllNewsPaperInfo,
     AnswerNewsPaperInfo,
+    AnswerNewsPaperInfoDescription,
     AnswerReaderInfo,
     AnswerNewsPaperInfoReaders,
     AnswerRedactRank,
@@ -20,7 +21,7 @@ from app.validate.api.newspaper import (
 news_paper_router = APIRouter(
     prefix="/newspaper",
     tags=["newspaper"],
-    responses=get_exception_codes(types=["newspaper"]),
+    responses=get_exception_codes(types=["newspaper", "setting"]),
 )
 
 @news_paper_router.get("/search", response_model=AnswerAllNewsPaperInfo)
@@ -66,6 +67,14 @@ async def news_paper_info(
     session = Depends(get_session())
 ):
     return await NewsPaperService(session, query.tg_id, news_paper_id=id).info()
+
+@news_paper_router.post("/info/description", response_model=AnswerNewsPaperInfoDescription)
+async def news_paper_info_description(
+    query: QueryBody,
+    id: int = Query(description="ID газеты"),
+    session = Depends(get_session()),
+):
+    return await NewsPaperService(session, query.tg_id, news_paper_id=id).description()
 
 
 @news_paper_router.post("/readers", response_model=AnswerNewsPaperInfoReaders)

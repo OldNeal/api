@@ -23,6 +23,9 @@ class AnswerNewsPaperInfo(AnswerUserBody):
 class AnswerNewsPaperInfoReaders(AnswerNewsPaperInfoBase, AnswerUserBody):
     readers: list[AnswerReaderInfo]
 
+class AnswerNewsPaperInfoDescription(AnswerNewsPaperInfoBase, AnswerUserBody):
+    description: str | None = None
+
 class AnswerAllNewsPaperInfo(AnswerBody):
     search_value: str | None = None
     news_papers: list[NewsPaperInfo]

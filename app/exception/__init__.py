@@ -1,9 +1,10 @@
 from .base import PermissionException,BaseException, BaseExceptionResponse, UserDontFind
 from .beyonder import PathDontEnterException, SeqBusyException, UpseqNotComeException, DontBeyonderException, ALreadyBeyonderException, SeqDontExistException
 from .wiki import PathDontSearchException, PathDontEnterFilterException
-from .organ import DontMemberError, ALreadyOwnerError, ParametrValidateError, ParametrExistError, RankValidateError, DontEnterPurposeError, ExistRankError, ExistOrganError, InOneOrganError, ALreadyMemberError, OrganPermissioError, OrganPermissionNewRankError, OrganPermissionPurposeRankError, ClosenOrganError, HiddenOrganError
+from .organ import DontMemberError, ALreadyOwnerError, DontEnterPurposeError, ExistRankError, ExistOrganError, InOneOrganError, ALreadyMemberError, OrganPermissioError, OrganPermissionNewRankError, OrganPermissionPurposeRankError, ClosenOrganError, HiddenOrganError
 from .logs import DontLogFileException, DontHavePermissionException, DontExistCategoryException
 from .newspaper import ExistNewsPaperError, ReaderError, NewsPaperPermissioError
+from .setting import ParametrValidateError, ParametrExistError, RankValidateError
 
 exceptions: list[type[BaseException]] = [
     SeqDontExistException,

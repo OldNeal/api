@@ -5,7 +5,7 @@ from app.exception import get_exception_codes
 from app.service.organ import OrganService
 from app.validate.api.organ import AnswerOrganInfo, AnswerOrganGive, AnswerOrganSettingValues, AnswerAllOrganInfo, AnswerRedactRank, AnswerRedactTitul, AnswerOrganInfoDescription, AnswerOrganInfoMembers, AnswerMemberInfo, QueryOrganSetting, QueryOrganSettingDefault, AnswerOrganSetting
 
-organ_router = APIRouter(prefix='/organ', tags=['organ'], responses=get_exception_codes(types=['organ']))
+organ_router = APIRouter(prefix='/organ', tags=['organ'], responses=get_exception_codes(types=['organ', 'setting']))
 
 @organ_router.post('/member', response_model=AnswerMemberInfo)
 async def organ_member(

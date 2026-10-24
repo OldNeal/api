@@ -8,7 +8,7 @@ from app.validate.logic.setting import (
     SettingGroupValidate,
     SettingParametrValidate,
 )
-from app.exception.organ import ParametrValidateError, RankValidateError, ParametrExistError
+from app.exception.setting import ParametrValidateError, RankValidateError, ParametrExistError
 from app.db.models.organ import OrganDB
 
 PARAMETRS_JSON_PATH = PurePath('app') / PurePath('logic') / PurePath('setting') / PurePath('parametrs.json')
@@ -83,9 +83,6 @@ class SettingParametr(BaseLogicValidate):
     def is_not_default(self):
         return not self.have_default_value
 
-with open(PARAMETRS_JSON_PATH, encoding='UTF-8') as file:
-    PARAMETRS = [SettingParametr.model_validate(p) for p in json.loads(file.read())]
-
 GROUP_NAMES = {
     'main': 'Основные',
     'permission': 'Права',
@@ -132,11 +129,16 @@ class Setting:
         self.data = data
         self._parametrs = [
             parametr.model_copy(deep=True)
-            for parametr in PARAMETRS
+            for parametr in self.get_parametrs()
             if parametr.type == self.type
         ]
         self.parametr_tags = [p.tag for p in self._parametrs]
         self.update(data)
+
+    @classmethod
+    def get_parametrs(self):
+        with open(PARAMETRS_JSON_PATH, encoding='UTF-8') as file:
+            return [SettingParametr.model_validate(p) for p in json.loads(file.read())]
 
     @property
     def parametrs(self) -> list[SettingParametr]:

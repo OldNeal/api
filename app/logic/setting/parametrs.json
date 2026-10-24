@@ -121,9 +121,41 @@
 {
     "tag":"name",
     "type":"news_paper",
-    "group":"permission",
+    "group":"appearance",
     "have_default_value":false,
     "converter":"is_str"
+},
+{
+    "tag":"emodzi",
+    "type":"news_paper",
+    "group":"appearance",
+    "have_default_value":false,
+    "converter":"is_str"
+},
+{
+    "tag":"custom_emodzi_id",
+    "type":"news_paper",
+    "group":"appearance",
+    "have_default_value":false,
+    "converter":"is_str"
+},
+{
+    "tag":"description",
+    "type":"news_paper",
+    "group":"appearance",
+    "have_default_value":false,
+    "converter":"is_str"
+},
+{
+    "tag":"start_rank",
+    "type":"news_paper",
+    "group":"main",
+    "default_value":2,
+    "converter":"check_rank_exist",
+    "kwargs":{
+        "max_rank":2,
+        "min_rank":0
+    }
 },
 {
     "tag":"editor_rank",
