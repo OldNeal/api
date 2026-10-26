@@ -1,6 +1,6 @@
-from app.validate.api.base import datetime, Literal, BaseAPIValidate, Any, AnswerBody
+from app.validate.api.base import datetime, Literal, BaseAPIValidate, Any, AnswerBaseBody
 
-class AnswerAllStats(AnswerBody):
+class AnswerAllStats(AnswerBaseBody):
     users: int
     beyonders: int
     members: int

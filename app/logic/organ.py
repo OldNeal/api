@@ -6,8 +6,8 @@ from app.logic.setting.base import OrganSetting
 from app.exception.organ import DontMemberError, DontEnterPurposeError, ExistRankError, ALreadyOwnerError, ExistOrganError, InOneOrganError, ALreadyMemberError, OrganPermissioError, OrganPermissionNewRankError, HiddenOrganError, ClosenOrganError, OrganPermissionPurposeRankError
 
 class OrganLogic(BaseLogic):
-    def __init__(self, session, tg_id: int | None = None, purpose_tg_id: int | None = None, organ_id: int | None = None, is_admin: bool = False):
-        super().__init__(session, tg_id, purpose_tg_id, is_admin)
+    def __init__(self, session, user_id: int | None = None, purpose_user_id: int | None = None, organ_id: int | None = None, is_admin: bool = False):
+        super().__init__(session, user_id, purpose_user_id, is_admin)
         self.organ_id = organ_id
 
     def boolean(self, *args, func, **kwargs):
@@ -18,16 +18,16 @@ class OrganLogic(BaseLogic):
 
     def is_member(self, user: UserDB, to_print: bool = True):
         if user.member is None:
-            raise DontMemberError(tg_id=user.tg_id, to_print=to_print)
+            raise DontMemberError(user_id=user.id, to_print=to_print)
         return user
 
     def is_not_member(self, user: UserDB, to_print: bool = True):
         if user.member:
-            raise ALreadyMemberError(tg_id=user.tg_id, to_print=to_print)
+            raise ALreadyMemberError(user_id=user.id, to_print=to_print)
         return user
 
     def is_enter_purpose(self, user: UserDB, purpose: UserDB | None = None, to_print: bool = True):
-        if purpose is None or user.tg_id == purpose.tg_id:
+        if purpose is None or user.id == purpose.id:
             raise DontEnterPurposeError(to_print=to_print)
         return user, purpose
     
@@ -75,20 +75,20 @@ class OrganLogic(BaseLogic):
 
     def is_capture(self, owner: AnswerMemberInfo | None, to_print: bool = True):
         if owner:
-            raise OrganPermissioError(owner_id=owner.user.tg_id, to_print=to_print)
+            raise OrganPermissioError(owner_id=owner.telegram.user, to_print=to_print)
         return True
     
 
-    async def check_is_member(self, tg_id: int | None = None):
-        user = await self.get_user(tg_id)
+    async def check_is_member(self, user_id: int | None = None):
+        user = await self.get_user(user_id)
         return self.is_member(user)
 
-    async def check_is_not_member(self, tg_id: int | None = None):
-        user = await self.get_user(tg_id)
+    async def check_is_not_member(self, user_id: int | None = None):
+        user = await self.get_user(user_id)
         return self.is_not_member(user)
 
     async def check_permission(self, tag: str):
-        user = await self.check_is_member(self.tg_id)
+        user = await self.check_is_member(self.user_id)
         return self.is_permission(user, tag)
 
     async def check_rank(self, user: UserDB, new_purpose_rank: int):
@@ -109,14 +109,14 @@ class OrganLogic(BaseLogic):
 
     async def check_capture(self):
         user = await self.check_is_member()
-        owner = await self.get_owner()
-        if owner and owner.user.tg_id == user.tg_id:
+        owner = await self.dao.user.get_organ_owner_by_organ_id(self.organ_id)
+        if owner and owner.id == user.id:
             raise ALreadyOwnerError()
         self.is_capture(owner)
         return user
 
     async def check_give(self):
-        user = await self.check_is_member(self.tg_id)
+        user = await self.check_is_member(self.user_id)
         purpose = await self.check_is_member()
         self.is_owner(user)
         self.is_enter_purpose(user, purpose)
@@ -138,7 +138,8 @@ class OrganLogic(BaseLogic):
     async def return_member_info(self, user: UserDB, purpose: UserDB | None = None, add_for_buttons: bool = True):
         purpose = purpose or user
         return AnswerMemberInfo(
-            user=self.return_query_body(purpose),
+            user=self.return_query_body(user),
+            purpose=self.return_query_body(purpose),
             member=(MemberInfo(
                     titul=purpose.member.titul,
                     organ_name=purpose.member.organ.name,
@@ -343,7 +344,12 @@ class OrganLogic(BaseLogic):
         await self.dao.flush()
         self.log_kwargs = self.log_kwargs | {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
         self.botlog.organ_rank(old_rank=old_rank, new_rank=purpose.member.rank, **self.log_kwargs)
-        return AnswerRedactRank(user=self.return_query_body(purpose), new_rank=purpose.member.rank, old_rank=old_rank)
+        return AnswerRedactRank(
+            user=self.return_query_body(user),
+            purpose=self.return_query_body(purpose),
+            new_rank=purpose.member.rank,
+            old_rank=old_rank,
+        )
     
     async def kick(self):
         user, purpose = await self.check_organ_admin_permission('kick')
@@ -362,7 +368,12 @@ class OrganLogic(BaseLogic):
         await self.dao.flush()
         self.log_kwargs = self.log_kwargs | {'organ_name':user.member.organ.name, 'organ_id':user.member.organ.id}
         self.botlog.organ_titul(old_titul=old_titul, new_titul=purpose.member.titul, **self.log_kwargs)
-        return AnswerRedactTitul(user=self.return_query_body(purpose), new_titul=titul, old_titul=old_titul)
+        return AnswerRedactTitul(
+            user=self.return_query_body(user),
+            purpose=self.return_query_body(purpose),
+            new_titul=titul,
+            old_titul=old_titul,
+        )
 
     async def capture(self):
         user = await self.check_capture()
@@ -384,6 +395,6 @@ class OrganLogic(BaseLogic):
         self.botlog.organ_rank(old_rank=old_rank, new_rank=user.member.rank, **self.log_kwargs)
         self.botlog.organ_rank(old_rank=old_rank_purpose, new_rank=purpose.member.rank, **self.log_kwargs)
         return AnswerOrganGive(
-            user=await self.query_body(self.tg_id),
-            purpose=await self.return_member_info(user, purpose)
+            user=await self.query_body(self.user_id),
+            purpose=await self.query_body(purpose.id),
         )

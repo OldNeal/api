@@ -4,12 +4,15 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from app.exception.base import BaseException
 from config import settings, use_route_names_as_operation_ids
-import uvicorn
-from app.api.endpoints.main import main_router
-from app.api.midlwares import UpdateUserInfoMidlware
+from app.redis.base import lifespan, redis_ping
+from app.redis.links import links, LinkHashs
+import uvicorn, asyncio
+from app.api.endpoints.main import base_router
+from app.api.midlwares import LogMidlware
 from app.exception import BaseExceptionResponse, get_exception_codes
 from app.validate.api.base import AnswerMain
 from app.logging.base import botlog
+from app.db.metods.ping import ping_db
 
 app = FastAPI(
     title=settings.TITLE,
@@ -18,11 +21,12 @@ app = FastAPI(
     responses=get_exception_codes(types=['base']),
     docs_url=settings.docs_url,     
     redoc_url=settings.redoc_url,    
-    openapi_url=settings.openapi_url  
+    openapi_url=settings.openapi_url,
+    lifespan=lifespan
 )
 
-app.include_router(main_router)
-app.add_middleware(UpdateUserInfoMidlware)
+app.include_router(base_router)
+app.add_middleware(LogMidlware)
 
 @app.get('/', response_model=AnswerMain)
 def main():
@@ -58,13 +62,26 @@ async def handle_any_error(request, exc):
 
 use_route_names_as_operation_ids(app)
 
+async def main():
+    try:
+        botlog.logger.info('API запускается')
+        await ping_db(True)
+        await redis_ping(True)
+        await links.cache_all()
+        await links.hscan_all(LinkHashs.TG_HASH)
+        botlog.start()
+        uvicorn.run(
+            settings.APP, 
+            host=settings.HOST,
+            port=settings.PORT,
+            reload=settings.is_reload,
+            log_level=settings.UVICORN_LOG_LEVEL,  
+            access_log=settings.is_access_log
+            ) 
+    except:
+        pass
+    finally:
+        botlog.stop()
+    
 if __name__ == '__main__':
-    botlog.start()
-    uvicorn.run(
-        settings.APP, 
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.is_reload,
-        log_level=settings.UVICORN_LOG_LEVEL,  
-        access_log=settings.is_access_log
-        ) 
+    asyncio.run(main())

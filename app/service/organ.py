@@ -2,9 +2,9 @@ from app.logic.organ import OrganLogic
 from app.service.base import BaseService
 
 class OrganService(BaseService):
-    def __init__(self, session, tg_id: int | None = None, purpose_tg_id: int | None = None, organ_id: int | None = None, is_admin: bool = False):
-        super().__init__(session, tg_id, purpose_tg_id, is_admin)
-        self.logic = OrganLogic(session, tg_id=tg_id, purpose_tg_id=purpose_tg_id, organ_id=organ_id, is_admin=self.is_admin)
+    def __init__(self, session, user_id: int | None = None, purpose_user_id: int | None = None, organ_id: int | None = None, is_admin: bool = False):
+        super().__init__(session, user_id, purpose_user_id, is_admin)
+        self.logic = OrganLogic(session, user_id=user_id, purpose_user_id=purpose_user_id, organ_id=organ_id, is_admin=self.is_admin)
 
     async def member(self):
         return await self.logic.member()

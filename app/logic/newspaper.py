@@ -22,16 +22,16 @@ class NewsPaperLogic(BaseLogic):
     def __init__(
         self,
         session,
-        tg_id: int | None = None,
-        purpose_tg_id: int | None = None,
+        user_id: int | None = None,
+        purpose_user_id: int | None = None,
         is_admin: bool = False,
         news_paper_id: int | None = None,
     ):
-        super().__init__(session, tg_id, purpose_tg_id, is_admin)
+        super().__init__(session, user_id, purpose_user_id, is_admin)
         self.news_paper_id = news_paper_id
 
-    async def check_reader(self, purpose_tg_id: int, news_paper_id: int, is_check_reader: bool = True):
-        user = await self.get_user(purpose_tg_id)
+    async def check_reader(self, purpose_user_id: int, news_paper_id: int, is_check_reader: bool = True):
+        user = await self.get_user(purpose_user_id)
         await user.awaitable_attrs.readers
         is_reader = news_paper_id in user.readers_by_news_paper_id
         if is_reader and not is_check_reader:
@@ -47,7 +47,7 @@ class NewsPaperLogic(BaseLogic):
         return news_paper
 
     async def check_permission(self, news_paper_id: int, permission_rank: int | None = None, setting_parametr: str | None = None):
-        user = await self.check_reader(self.tg_id, news_paper_id)
+        user = await self.check_reader(self.user_id, news_paper_id)
         await user.awaitable_attrs.readers
         news_paper = user.news_papers.get(news_paper_id)
         reader = user.readers_by_news_paper_id.get(news_paper_id)
@@ -58,11 +58,11 @@ class NewsPaperLogic(BaseLogic):
                 raise NewsPaperPermissioError()
         return user, news_paper
 
-    async def return_reader_info(self, reader: ReaderDB, for_buttons: ForButtons | None = None):
+    async def return_reader_info(self, reader: ReaderDB, news_paper: NewsPaperDB, for_buttons: ForButtons | None = None):
         user = await reader.awaitable_attrs.user
-        news_paper = await reader.awaitable_attrs.news_paper
         return AnswerReaderInfo(
             user=self.return_query_body(user),
+            purpose=self.return_query_body(user),
             reader=ReaderInfo(
                 news_paper_name=news_paper.name,
                 news_paper_id=news_paper.id,
@@ -111,7 +111,7 @@ class NewsPaperLogic(BaseLogic):
             news_paper=NewsPaperInfo(
                 id=news_paper.id,
                 name=news_paper.name,
-                owner=await self.return_reader_info(news_paper.owner) if news_paper.owner else None,
+                owner=await self.return_reader_info(news_paper.owner, news_paper) if news_paper.owner else None,
                 emodzi=news_paper.emodzi,
                 custom_emodzi_id=news_paper.custom_emodzi_id,
                 reader_counts=len(readers),
@@ -127,7 +127,7 @@ class NewsPaperLogic(BaseLogic):
                 NewsPaperInfo(
                     id=news_paper.id,
                     name=news_paper.name,
-                    owner=await self.return_reader_info(news_paper.owner) if news_paper.owner else None,
+                    owner=await self.return_reader_info(news_paper.owner, news_paper) if news_paper.owner else None,
                     emodzi=news_paper.emodzi,
                     custom_emodzi_id=news_paper.custom_emodzi_id,
                     reader_counts=len(readers),
@@ -142,17 +142,17 @@ class NewsPaperLogic(BaseLogic):
         return AnswerAllNewsPaperInfo(news_papers=await self.return_news_papers_info(list(data)))
 
     async def news_papers_where_editor(self):
-        user = await self.get_user(self.tg_id)
+        user = await self.get_user(self.user_id)
         await user.awaitable_attrs.readers
         return AnswerAllNewsPaperInfo(news_papers=await self.return_news_papers_info([r.news_paper for r in user.readers if r.is_editor]))
 
     async def news_papers_for_subscribe(self):
         data = await self.dao.news_paper.find_all()
-        user = await self.get_user(self.tg_id)
+        user = await self.get_user(self.user_id)
         return AnswerAllNewsPaperInfo(news_papers=await self.return_news_papers_info([p for p in data if user.id not in p.reader_user_ids]))
 
     async def news_papers(self):
-        user = await self.get_user(self.tg_id)
+        user = await self.get_user(self.user_id)
         await user.awaitable_attrs.readers
         return AnswerAllNewsPaperInfo(news_papers=await self.return_news_papers_info(list(user.news_papers.values())))
 
@@ -164,7 +164,7 @@ class NewsPaperLogic(BaseLogic):
         )
 
     async def info(self):
-        user = await self.get_user(self.tg_id)
+        user = await self.get_user(self.user_id)
         news_paper = await self.check_exist_news_paper(self.news_paper_id)
         return await self.return_news_paper_info(
             user,
@@ -173,7 +173,7 @@ class NewsPaperLogic(BaseLogic):
         )
 
     async def description(self):
-        user = await self.get_user(self.tg_id)
+        user = await self.get_user(self.user_id)
         news_paper = await self.check_exist_news_paper(self.news_paper_id)
         return AnswerNewsPaperInfoDescription(
             user=self.return_query_body(user),
@@ -183,26 +183,27 @@ class NewsPaperLogic(BaseLogic):
         )
 
     async def readers(self):
-        user = await self.get_user(self.tg_id)
+        user = await self.get_user(self.user_id)
         news_paper = await self.check_exist_news_paper(self.news_paper_id)
         await news_paper.awaitable_attrs.readers
         return AnswerNewsPaperInfoReaders(
             user=self.return_query_body(user),
             id=news_paper.id,
             name=news_paper.name,
-            readers=[await self.return_reader_info(reader) for reader in sorted(news_paper.readers, key=lambda x: x.rank)],
+            readers=[await self.return_reader_info(reader, news_paper) for reader in sorted(news_paper.readers, key=lambda x: x.rank)],
         )
 
     async def reader(self):
         user = await self.get_user(only_user=True)
-        purpose = await self.get_user(purpose_tg_id=self.purpose_tg_id)
+        purpose = await self.get_user(purpose_user_id=self.purpose_user_id)
         news_paper = await self.check_exist_news_paper(self.news_paper_id)
         await purpose.awaitable_attrs.readers
         reader = purpose.readers_by_news_paper_id.get(news_paper.id)
         if reader is None:
             raise ReaderError()
         return AnswerReaderInfo(
-            user=self.return_query_body(purpose),
+            user=self.return_query_body(user),
+            purpose=self.return_query_body(purpose),
             reader=ReaderInfo(
                 news_paper_name=news_paper.name,
                 news_paper_id=news_paper.id,
@@ -217,7 +218,7 @@ class NewsPaperLogic(BaseLogic):
 
 
     async def create(self, name: str):
-        user = await self.get_user(self.tg_id)
+        user = await self.get_user(self.user_id)
         news_paper = await self.dao.news_paper.add({"name": name})
         await user.awaitable_attrs.readers
         user.readers.append(ReaderDB(user=user, news_paper=news_paper, rank=AUTHOR_RANK))
@@ -226,7 +227,7 @@ class NewsPaperLogic(BaseLogic):
         return await self.return_news_paper_info(user, news_paper)
 
     async def subscribe(self):
-        user = await self.check_reader(self.tg_id, self.news_paper_id, False)
+        user = await self.check_reader(self.user_id, self.news_paper_id, False)
         news_paper = await self.check_exist_news_paper(self.news_paper_id)
         await user.awaitable_attrs.readers
         user.readers.append(ReaderDB(user=user, news_paper=news_paper))
@@ -235,7 +236,7 @@ class NewsPaperLogic(BaseLogic):
         return await self.return_news_paper_info(user, news_paper)
 
     async def unsubscribe(self):
-        user = await self.check_reader(self.tg_id, self.news_paper_id)
+        user = await self.check_reader(self.user_id, self.news_paper_id)
         news_paper = await self.check_exist_news_paper(self.news_paper_id)
         await user.awaitable_attrs.readers
         if news_paper.id in user.news_papers:
@@ -329,26 +330,27 @@ class NewsPaperLogic(BaseLogic):
             user=self.return_query_body(user),
             id=news_paper.id,
             name=news_paper.name,
-            readers=[await self.return_reader_info(reader) for reader in news_paper.readers],
+            readers=[await self.return_reader_info(reader, news_paper) for reader in news_paper.readers],
         )
 
     async def redact_rank(self, is_make: bool):
-        await self.check_permission(self.news_paper_id, permission_rank=AUTHOR_RANK)
-        purpose = await self.check_reader(self.purpose_tg_id, self.news_paper_id)
-        news_paper = await self.check_exist_news_paper(self.news_paper_id)
+        user, news_paper = await self.check_permission(self.news_paper_id, permission_rank=AUTHOR_RANK)
+        purpose = await self.check_reader(self.purpose_user_id, self.news_paper_id)
+        await news_paper.awaitable_attrs.readers
         purpose_reader = news_paper.reader_user_ids.get(purpose.id)
         old_rank = purpose_reader.rank
         purpose_reader.rank = EDITOR_RANK if is_make else READER_RANK
         await self.dao.flush()
         self.botlog.newspaper_rank(news_paper.name, news_paper.id, old_rank, purpose_reader.rank)
         return AnswerRedactRank(
-            user=self.return_query_body(purpose),
+            user=self.return_query_body(user),
+            purpose=self.return_query_body(purpose),
             new_rank=purpose_reader.rank,
             old_rank=old_rank,
             news_paper=NewsPaperInfo(
                 id=news_paper.id,
                 name=news_paper.name,
-                owner=await self.return_reader_info(news_paper.owner) if news_paper.owner else None,
+                owner=await self.return_reader_info(news_paper.owner, news_paper) if news_paper.owner else None,
                 emodzi=news_paper.emodzi,
                 custom_emodzi_id=news_paper.custom_emodzi_id,
                 reader_counts=len(news_paper.readers))
@@ -372,24 +374,24 @@ class NewsPaperLogic(BaseLogic):
             self.news_paper_id,
             permission_rank=AUTHOR_RANK,
         )
-        purpose = await self.check_reader(self.purpose_tg_id, self.news_paper_id)
+        purpose = await self.check_reader(self.purpose_user_id, self.news_paper_id)
         if purpose.id == user.id:
             raise NewsPaperPermissioError()
         await purpose.awaitable_attrs.readers
         purpose_reader = purpose.readers_by_news_paper_id.get(self.news_paper_id)
         user_reader = user.readers_by_news_paper_id[self.news_paper_id]
-        old_owner_tg_id = user.tg_id
-        new_owner_tg_id = purpose.tg_id
+        old_owner_user_id = user.id
+        new_owner_user_id = purpose.id
         user_reader.rank = EDITOR_RANK
         purpose_reader.rank = AUTHOR_RANK
         await self.dao.flush()
         self.botlog.newspaper_give(
             news_paper.name,
             news_paper.id,
-            old_owner_tg_id,
-            new_owner_tg_id,
+            old_owner_user_id,
+            new_owner_user_id,
         )
         return AnswerNewsPaperGive(
             user=self.return_query_body(user),
-            purpose=await self.return_reader_info(purpose_reader),
+            purpose=self.return_query_body(purpose),
         )

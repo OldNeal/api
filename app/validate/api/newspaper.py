@@ -1,12 +1,12 @@
-from app.validate.api.base import AnswerBody, AnswerUserBody, QueryBody, ReaderInfo, ForButtons
+from app.validate.api.base import AnswerBody, AnswerBaseBody, QueryBody, ReaderInfo, ForButtons
 from app.validate.logic.setting import OrganSettingValidate
 from app.validate.api.organ import OrganSettingDefault
 
-class AnswerNewsPaperInfoBase(AnswerBody):
+class AnswerNewsPaperInfoBase(AnswerBaseBody):
     id: int
     name: str
 
-class AnswerReaderInfo(AnswerUserBody):
+class AnswerReaderInfo(AnswerBody):
     reader: ReaderInfo | None = None
     for_buttons: ForButtons | None = None
 
@@ -16,33 +16,33 @@ class NewsPaperInfo(AnswerNewsPaperInfoBase):
     custom_emodzi_id: str | None = None
     reader_counts: int = 0
 
-class AnswerNewsPaperInfo(AnswerUserBody):
+class AnswerNewsPaperInfo(AnswerBody):
     news_paper: NewsPaperInfo
     for_buttons: ForButtons | None = None
 
-class AnswerNewsPaperInfoReaders(AnswerNewsPaperInfoBase, AnswerUserBody):
+class AnswerNewsPaperInfoReaders(AnswerNewsPaperInfoBase, AnswerBody):
     readers: list[AnswerReaderInfo]
 
-class AnswerNewsPaperInfoDescription(AnswerNewsPaperInfoBase, AnswerUserBody):
+class AnswerNewsPaperInfoDescription(AnswerNewsPaperInfoBase, AnswerBody):
     description: str | None = None
 
-class AnswerAllNewsPaperInfo(AnswerBody):
+class AnswerAllNewsPaperInfo(AnswerBaseBody):
     search_value: str | None = None
     news_papers: list[NewsPaperInfo]
 
-class AnswerRedactRank(AnswerUserBody):
+class AnswerRedactRank(AnswerBody):
     news_paper: NewsPaperInfo
     new_rank: int
     old_rank: int
 
-class AnswerNewsPaperSettingValues(AnswerUserBody):
+class AnswerNewsPaperSettingValues(AnswerBody):
     values: dict
 
-class AnswerNewsPaperSetting(AnswerUserBody):
+class AnswerNewsPaperSetting(AnswerBody):
     settings: OrganSettingValidate
 
-class AnswerNewsPaperGive(AnswerUserBody):
-    purpose: AnswerReaderInfo
+class AnswerNewsPaperGive(AnswerBody):
+    pass
 
 class QueryNewsPaperSetting(QueryBody):
     parametrs: dict

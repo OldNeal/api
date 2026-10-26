@@ -337,8 +337,8 @@ class BotLog:
         self,
         newspaper_name: str,
         newspaper_id: int,
-        old_owner_tg_id: int,
-        new_owner_tg_id: int,
+        old_owner_user_id: int,
+        new_owner_user_id: int,
         **kwargs,
     ):
         self.logger.log(
@@ -346,8 +346,8 @@ class BotLog:
             **kwargs | {
                 'newspaper_name':newspaper_name,
                 'newspaper_id':newspaper_id,
-                'old_owner_tg_id':old_owner_tg_id,
-                'new_owner_tg_id':new_owner_tg_id,
+                'old_owner_user_id':old_owner_user_id,
+                'new_owner_user_id':new_owner_user_id,
             })
 
     def newspaper_setting(self, newspaper_name: str, newspaper_id: int, old_setting: dict, new_setting: dict, **kwargs):

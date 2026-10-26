@@ -1,20 +1,20 @@
-from app.validate.api.base import AnswerBody, datetime
+from app.validate.api.base import AnswerBaseBody, datetime
 from app.db.models.beyonder import SequenceDB, PathDB, GreatAncientDB
 
-class AnswerSeqInfo(AnswerBody):
+class AnswerSeqInfo(AnswerBaseBody):
     number: int
     name: str
     path_id: int
     seq_id: int
 
-class AnswerPathInfo(AnswerBody):
+class AnswerPathInfo(AnswerBaseBody):
     group: str
     name: str
     path_id: int
     emodzi: str | None = None
     custom_emodzi_id: str | None = None
 
-class AnswerGAInfo(AnswerBody):
+class AnswerGAInfo(AnswerBaseBody):
     group: str
     name: str
     ga_id: int
@@ -49,7 +49,7 @@ class AnswerGAFullInfo(AnswerGAInfo):
         paths = [AnswerPathInfo(name=p.name, path_id=p.id, group=data.group, emodzi=p.emodzi, custom_emodzi_id=p.custom_emodzi_id) for p in data.paths]
         return cls(name=data.name, ga_id=data.id, group=data.group, paths=paths, emodzi=data.emodzi, custom_emodzi_id=data.custom_emodzi_id)
 
-class AnswerGroupInfo(AnswerBody):
+class AnswerGroupInfo(AnswerBaseBody):
     group_name: str
     gas: list[AnswerGAInfo] 
 
@@ -63,18 +63,18 @@ class AnswerGroupInfo(AnswerBody):
 
 
 
-class AnswerSeqSearchInfo(AnswerBody):
+class AnswerSeqSearchInfo(AnswerBaseBody):
     search_value: str | None = None
     seqs: list[AnswerSeqInfo] | None = None
 
     @classmethod
     def to_query(cls, search_value: str, seqs: list[SequenceDB]):
         if seqs:
-            seqs = [AnswerSeqInfo(seq_id=s.id, seq=s.number, name=s.name, path_id=s.path_id) for s in seqs]
+            seqs = [AnswerSeqInfo(seq_id=s.id, number=s.number, name=s.name, path_id=s.path_id) for s in seqs]
             return cls(search_value=search_value, seqs=seqs)
         return cls(search_value=search_value)
     
-class AnswerPathSearchInfo(AnswerBody):
+class AnswerPathSearchInfo(AnswerBaseBody):
     search_value: str | None = None
     paths: list[AnswerPathInfo] | None = None
 
@@ -85,7 +85,7 @@ class AnswerPathSearchInfo(AnswerBody):
             return cls(search_value=search_value, paths=paths)
         return cls(search_value=search_value)
 
-class AnswerGASearchInfo(AnswerBody):
+class AnswerGASearchInfo(AnswerBaseBody):
     search_value: str | None = None
     gas: list[AnswerGAInfo] | None = None
     
@@ -102,17 +102,17 @@ class AnswerGASearchInfo(AnswerBody):
 
 
 
-class AnswerAllSeqInfo(AnswerBody):
+class AnswerAllSeqInfo(AnswerBaseBody):
     seqs: list[AnswerSeqInfo] | None = None
 
     @classmethod
     def to_query(cls, seqs: list[SequenceDB]):
         if seqs:
-            seqs = [AnswerSeqInfo(seq_id=s.id, seq=s.number, name=s.name, path_id=s.path_id) for s in seqs]
+            seqs = [AnswerSeqInfo(seq_id=s.id, number=s.number, name=s.name, path_id=s.path_id) for s in seqs]
             return cls(seqs=seqs)
         return cls()
     
-class AnswerAllPathInfo(AnswerBody):
+class AnswerAllPathInfo(AnswerBaseBody):
     paths: list[AnswerPathInfo] | None = None
 
     @classmethod
@@ -122,7 +122,7 @@ class AnswerAllPathInfo(AnswerBody):
             return cls(paths=paths)
         return cls()
 
-class AnswerAllGAInfo(AnswerBody):
+class AnswerAllGAInfo(AnswerBaseBody):
     gas: list[AnswerGAInfo] | None = None
     
     @classmethod
@@ -132,5 +132,5 @@ class AnswerAllGAInfo(AnswerBody):
             return cls(gas=new_gas)
         return cls()
     
-class AnswerAllGroupInfo(AnswerBody):
+class AnswerAllGroupInfo(AnswerBaseBody):
     groups: list[str]

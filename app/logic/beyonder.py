@@ -9,7 +9,7 @@ from app.validate.api.beyonder import (AnswerTimeReplace,
                                        Sequence,
                                        AnswerBeyonderList,
                                        AnswerBeyonderInfo,
-                                       AnswerUserBody,
+                                       AnswerBody,
                                        AnswerPathInfo,)
 
 upseq_time = {
@@ -37,13 +37,14 @@ class BeyonderLogic(BaseLogic):
 
     async def info(self):
         beyonder = await self.get_user()
-        return AnswerBeyonderInfo(user=self.return_query_body(beyonder)).to_query(beyonder)
+        user = self.return_query_body(beyonder)
+        return AnswerBeyonderInfo(user=user, purpose=user).to_query(beyonder)
 
     async def drink(self, path_name: str | None = None, path_id: int | None = None, seq: int = 9):
         if seq < 9:
             self.check_permission()
         self.check_exist_seq(seq)
-        user = await self.get_user(self.purpose_tg_id)
+        user = await self.get_user(self.purpose_user_id)
         if user.beyonder:
             raise ALreadyBeyonderException(path_name=user.beyonder.path_name, purpose_user=await self.query_body())
         if path_name == None and path_id == None:
@@ -68,12 +69,15 @@ class BeyonderLogic(BaseLogic):
         user.beyonder = await self.dao.beyonder.add(new_bndr)
         await self.dao.flush()
         self.botlog.drink(path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id)
-        return AnswerRedactSeq(user=await self.query_body(), 
-                           new=Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name),
-                           operation='add')
+        return AnswerRedactSeq(
+            user=await self.query_body(self.user_id),
+            purpose=await self.query_body(user.id),
+            new=Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name),
+            operation='add',
+        )
   
     async def upseq(self, new_seq_number: int | None = None, path_name: str | None = None):
-        user = await self.get_user(self.purpose_tg_id, is_raise_not_beyonder=True)
+        user = await self.get_user(self.purpose_user_id, is_raise_not_beyonder=True)
         if new_seq_number:
             new_seq_number = new_seq_number
             self.check_permission()
@@ -107,14 +111,17 @@ class BeyonderLogic(BaseLogic):
         user.beyonder.next_upseq = self.get_upseq_time(user.beyonder.seq_number)
         await self.dao.flush()
         self.botlog.upseq(path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id, new_path_name=old_path.name, new_path_id=old_path.id, new_seq=old_seq.number, new_seq_id=old_seq.id)
-        return AnswerRedactSeq(user=await self.query_body(), 
-                           new=Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name),
-                           old=Sequence(seq=old_seq.name, number=old_seq.number, path=old_path.name),
-                           operation='up')
+        return AnswerRedactSeq(
+            user=await self.query_body(self.user_id),
+            purpose=await self.query_body(user.id),
+            new=Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name),
+            old=Sequence(seq=old_seq.name, number=old_seq.number, path=old_path.name),
+            operation='up',
+        )
     
     async def downseq(self, new_seq_number: int | None = None, path_name: str | None = None):
         self.check_permission()
-        user = await self.get_user(self.purpose_tg_id, is_raise_not_beyonder=True)
+        user = await self.get_user(self.purpose_user_id, is_raise_not_beyonder=True)
         if new_seq_number == None:
             new_seq_number = user.beyonder.seq_number + 1
         self.check_exist_seq(new_seq_number)
@@ -135,27 +142,42 @@ class BeyonderLogic(BaseLogic):
         user.beyonder.next_upseq = self.get_upseq_time(user.beyonder.seq_number)
         await self.dao.flush()
         self.botlog.downseq(path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id, new_path_name=old_path.name, new_path_id=old_path.id, new_seq=old_seq.number, new_seq_id=old_seq.id)
-        return AnswerRedactSeq(user=await self.query_body(), 
-                           new=(Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name) if user.beyonder else None),
-                           old=Sequence(seq=old_seq.name, number=old_seq.number, path=old_path.name),
-                           operation='down')   
+        return AnswerRedactSeq(
+            user=await self.query_body(self.user_id),
+            purpose=await self.query_body(user.id),
+            new=(Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name) if user.beyonder else None),
+            old=Sequence(seq=old_seq.name, number=old_seq.number, path=old_path.name),
+            operation='down',
+        )
 
     async def time_info(self):
         user = await self.get_user(is_raise_not_beyonder=True)
-        return AnswerTimeInfo(user=await self.query_body(), next_upseq=user.beyonder.next_upseq, last_upseq=user.beyonder.last_upseq, upseq_days=user.beyonder.upseq_days)
+        body = await self.query_body(user.id)
+        return AnswerTimeInfo(
+            user=body,
+            purpose=body,
+            next_upseq=user.beyonder.next_upseq,
+            last_upseq=user.beyonder.last_upseq,
+            upseq_days=user.beyonder.upseq_days,
+        )
     
     async def replace_time(self, new_time: datetime):
         self.check_permission()
-        user = await self.get_user(self.purpose_tg_id, is_raise_not_beyonder=True)
+        user = await self.get_user(self.purpose_user_id, is_raise_not_beyonder=True)
         old_time = user.beyonder.next_upseq
         user.beyonder.next_upseq = new_time
         await self.dao.flush()
         self.botlog.time(old_time, new_time)
-        return AnswerTimeReplace(user=await self.query_body(),old_time=old_time, new_time=user.beyonder.next_upseq)
+        return AnswerTimeReplace(
+            user=await self.query_body(self.user_id),
+            purpose=await self.query_body(user.id),
+            old_time=old_time,
+            new_time=user.beyonder.next_upseq,
+        )
  
     async def edit_time(self, delta: timedelta, operator: str):
         self.check_permission()
-        user = await self.get_user(self.purpose_tg_id, is_raise_not_beyonder=True)
+        user = await self.get_user(self.purpose_user_id, is_raise_not_beyonder=True)
         old_time = user.beyonder.next_upseq
         match operator:
             case '-':
@@ -164,17 +186,27 @@ class BeyonderLogic(BaseLogic):
                 user.beyonder.next_upseq += delta
         await self.dao.flush()
         self.botlog.time(old_time, user.beyonder.next_upseq)
-        return AnswerTimeRedact(user=await self.query_body(),old_time=old_time, new_time=user.beyonder.next_upseq, seconds=delta.total_seconds(), operator=operator)
+        return AnswerTimeRedact(
+            user=await self.query_body(self.user_id),
+            purpose=await self.query_body(user.id),
+            old_time=old_time,
+            new_time=user.beyonder.next_upseq,
+            seconds=delta.total_seconds(),
+            operator=operator,
+        )
 
     async def kill(self):
-        if self.purpose_tg_id and not self.purpose_tg_id == self.tg_id:
+        if self.purpose_user_id and not self.purpose_user_id == self.user_id:
             self.check_permission()
-        user = await self.get_user(self.purpose_tg_id, is_raise_not_beyonder=True)
+        user = await self.get_user(self.purpose_user_id, is_raise_not_beyonder=True)
         old_beyonder = user.beyonder
         user.beyonder = None
         await self.dao.flush()
         self.botlog.kill(old_beyonder.path_name, old_beyonder.seq.path_id, old_beyonder.seq.number, old_beyonder.seq.id)
-        return AnswerUserBody(user=self.return_query_body(user))
+        return AnswerBody(
+            user=await self.query_body(self.user_id),
+            purpose=await self.query_body(user.id),
+        )
 
     async def list(self, path_id: int):
         beyonders = await self.dao.user.get_beyonders_by_path_id(path_id)
@@ -188,6 +220,6 @@ class BeyonderLogic(BaseLogic):
                 emodzi=path.emodzi, 
                 custom_emodzi_id=path.custom_emodzi_id
             ),
-            ga=AnswerBeyonderInfo(user=self.return_query_body(ga)).to_query(ga) if ga else None,
-            beyonders=[AnswerBeyonderInfo(user=self.return_query_body(bndr)).to_query(bndr) for bndr in sorted([bndr for bndr in beyonders if bndr.beyonder.ga is None], key=lambda x: x.beyonder.seq.number)]
+                ga=AnswerBeyonderInfo(user=self.return_query_body(ga), purpose=self.return_query_body(ga)).to_query(ga) if ga else None,
+                beyonders=[AnswerBeyonderInfo(user=self.return_query_body(bndr), purpose=self.return_query_body(bndr)).to_query(bndr) for bndr in sorted([bndr for bndr in beyonders if bndr.beyonder.ga is None], key=lambda x: x.beyonder.seq.number)]
             )

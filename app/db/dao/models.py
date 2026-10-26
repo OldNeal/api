@@ -13,6 +13,9 @@ class UserDAO(BaseDAO[UserDB]):
     model = UserDB
     load = [joinedload(model.beyonder).joinedload(BeyonderDB.seq).joinedload(SequenceDB.path).joinedload(PathDB.god)]
 
+    async def query_by_user_id(self, user_id: int):
+        return await self.find_one_or_none({'id':user_id})
+
     async def query_by_tg_id(self, tg_id: int):
         return await self.find_one_or_none({'tg_id':tg_id})
 

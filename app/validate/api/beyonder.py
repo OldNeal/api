@@ -1,4 +1,4 @@
-from app.validate.api.base import AnswerUserBody, UserDB, datetime, QueryBody, timedelta, Literal, BaseAPIValidate, AnswerBody, BeyonderInfo, ForButtons
+from app.validate.api.base import AnswerBaseBody, UserDB, datetime, QueryBody, timedelta, Literal, BaseAPIValidate, AnswerBody, BeyonderInfo, ForButtons
 from app.validate.api.wiki import AnswerPathInfo
 
 class Sequence(BaseAPIValidate):
@@ -8,17 +8,17 @@ class Sequence(BaseAPIValidate):
     emodzi: str | None = None
     custom_emodzi_id: str | None = None
 
-class AnswerRedactSeq(AnswerUserBody):
+class AnswerRedactSeq(AnswerBody):
     old: Sequence | None = None
     new: Sequence | None = None
     operation: Literal['up', 'down', 'add']
 
-class AnswerTimeInfo(AnswerUserBody):
+class AnswerTimeInfo(AnswerBody):
     next_upseq: datetime | None
     last_upseq: datetime
     upseq_days: int | None
 
-class AnswerTimeReplace(AnswerUserBody):
+class AnswerTimeReplace(AnswerBody):
     old_time: datetime
     new_time: datetime
 
@@ -27,7 +27,7 @@ class AnswerTimeRedact(AnswerTimeReplace):
     operator: Literal['-', '+']
 
 
-class AnswerBeyonderInfo(AnswerUserBody):
+class AnswerBeyonderInfo(AnswerBody):
     beyonder: BeyonderInfo | None = None
     for_buttons: ForButtons | None = None
 
@@ -43,7 +43,7 @@ class AnswerBeyonderInfo(AnswerUserBody):
                 )
         return self
 
-class AnswerBeyonderList(AnswerBody):
+class AnswerBeyonderList(AnswerBaseBody):
     path: AnswerPathInfo
     ga: AnswerBeyonderInfo | None = None
     beyonders: list[AnswerBeyonderInfo]

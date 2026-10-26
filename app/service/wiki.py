@@ -2,9 +2,9 @@ from app.logic.wiki import PathLogic
 from app.service.base import BaseService
 
 class PathService(BaseService):
-    def __init__(self, session, tg_id: int | None = None, purpose_tg_id: int | None = None, is_admin: bool = False):
-        super().__init__(session, tg_id, purpose_tg_id, is_admin)
-        self.logic = PathLogic(session, tg_id)
+    def __init__(self, session, user_id: int | None = None, purpose_user_id: int | None = None, is_admin: bool = False):
+        super().__init__(session, user_id, purpose_user_id, is_admin)
+        self.logic = PathLogic(session, user_id)
 
     async def seq(self, name: str | None = None, id: int | None = None):
         return await self.logic.seq(name, id)
@@ -22,6 +22,9 @@ class PathService(BaseService):
 
     async def search(self, value: str):
         return await self.logic.search(value)
+
+    async def seq_search(self, value: str):
+        return await self.logic.seq_search(value)
 
     async def ga_search(self, value: str):
         return await self.logic.ga_search(value)
@@ -48,4 +51,3 @@ class PathService(BaseService):
 
     async def path_by_ga_id(self, ga_id: int):
         return await self.logic.path_by_ga_id(ga_id)
-

@@ -39,4 +39,9 @@ class ParametrValidationException(BaseException):
 class UserDontFind(BaseException):
     default_message = 'Пользователь не найден'    
     status_code = 432
-    
+
+class DBError(BaseException):
+    default_message = 'DB не работает'    
+
+class RedisError(BaseException):
+    default_message = 'Redis не работает'   

@@ -11,5 +11,4 @@ stats_router = APIRouter(prefix='/stats', tags=['stats'])
 async def stats_all(              
                      session = Depends(get_session())
                      ):
-    data = await StatsService(session).all()
-    return data
+    return await StatsService(session).all()

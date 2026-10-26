@@ -9,28 +9,38 @@ class BaseAPIValidate(BaseModel):
 class BaseBody(BaseAPIValidate):
     tg_id: int
 
-class QueryBody(BaseBody):
-    tg_id: int
+class TelegramBody(BaseBody):
     username: str | None = None
     fullname: str | None = None
+
+class AnswerUserBody(BaseAPIValidate):
+    user_id: int
+    name: str | None = None
+    telegram: TelegramBody | None = None
+
+class QueryBody(BaseAPIValidate):
+    user_id: int
     is_admin: bool = False
     request_id: str | None = None
-    chat_id: int | None = None
 
-class AnswerBody(BaseAPIValidate):
+class QueryUserUpdate(QueryBody):
+    telegram: TelegramBody | None = None
+
+class AnswerBaseBody(BaseAPIValidate):
     pass
 
-class AnswerUserBody(AnswerBody):
-    user: QueryBody
+class AnswerBody(AnswerBaseBody):
+    user: AnswerUserBody
+    purpose: AnswerUserBody | None = None
 
-class BeyonderInfo(AnswerBody):
+class BeyonderInfo(AnswerBaseBody):
     path_name: str | None = None
     seq: int | None = None
     seq_name: str | None = None
     emodzi: str | None = None
     custom_emodzi_id: str | None = None
 
-class MemberInfo(AnswerBody):
+class MemberInfo(AnswerBaseBody):
     titul: str | None = None
     organ_name: str | None = None
     organ_id: int | None = None
@@ -38,13 +48,13 @@ class MemberInfo(AnswerBody):
     rank_name: str | None = None
     login_at: str | None = None
 
-class ReaderInfo(AnswerBody):
+class ReaderInfo(AnswerBaseBody):
     news_paper_name: str | None = None
     news_paper_id: int | None = None
     rank: int | None = None
     rank_name: str | None = None
 
-class AnswerBaseInfo(AnswerUserBody):
+class AnswerBaseInfo(AnswerBody):
     beyonder: BeyonderInfo | None = None
     member: MemberInfo | None = None
 
@@ -68,7 +78,7 @@ class AnswerBaseInfo(AnswerUserBody):
                 )
         return self
 
-class ForButtons(AnswerBody):
+class ForButtons(AnswerBaseBody):
     is_member: bool = False
     is_reader: bool = False
     organ_id: int | None = None
@@ -82,9 +92,9 @@ class ForButtons(AnswerBody):
     is_give: bool = False
     is_news: bool = False
     
-class AnswerMain(AnswerBody):
+class AnswerMain(AnswerBaseBody):
     message: str
     version: str
 
-class AnswerLogFileNames(AnswerBody):
+class AnswerLogFileNames(AnswerBaseBody):
     names: list[str]

@@ -2,9 +2,9 @@ from app.logic.beyonder import BeyonderLogic
 from app.service.base import BaseService
 
 class BeyonderService(BaseService):
-    def __init__(self, session, tg_id: int | None = None, purpose_tg_id: int | None = None, is_admin: bool = False):
-        super().__init__(session, tg_id, purpose_tg_id, is_admin)
-        self.logic = BeyonderLogic(session, tg_id=tg_id, purpose_tg_id=purpose_tg_id, is_admin=self.is_admin)
+    def __init__(self, session, user_id: int | None = None, purpose_user_id: int | None = None, is_admin: bool = False):
+        super().__init__(session, user_id, purpose_user_id, is_admin)
+        self.logic = BeyonderLogic(session, user_id=user_id, purpose_user_id=purpose_user_id, is_admin=self.is_admin)
         
     async def drink(self, path_name: str | None = None, path_id: int | None = None, seq: int = 9):
         return await self.logic.drink(path_name, path_id, seq)

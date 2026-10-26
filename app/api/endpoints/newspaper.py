@@ -37,28 +37,28 @@ async def news_paper_all(
     query: QueryBody,
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.tg_id).all()
+    return await NewsPaperService(session, query.user_id).all()
 
 @news_paper_router.post("/list", response_model=AnswerAllNewsPaperInfo)
 async def news_paper_list(
     query: QueryBody,
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.tg_id).news_papers()
+    return await NewsPaperService(session, query.user_id).news_papers()
 
 @news_paper_router.post("/editors", response_model=AnswerAllNewsPaperInfo)
 async def news_paper_list_where_editor(
     query: QueryBody,
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.tg_id).news_papers_where_editor()
+    return await NewsPaperService(session, query.user_id).news_papers_where_editor()
 
 @news_paper_router.post("/for_subscribe", response_model=AnswerAllNewsPaperInfo)
 async def news_paper_for_subscribe(
     query: QueryBody,
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.tg_id).news_papers_for_subscribe()
+    return await NewsPaperService(session, query.user_id).news_papers_for_subscribe()
 
 @news_paper_router.post("/info", response_model=AnswerNewsPaperInfo)
 async def news_paper_info(
@@ -66,7 +66,7 @@ async def news_paper_info(
     id: int = Query(description="ID газеты"),
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.tg_id, news_paper_id=id).info()
+    return await NewsPaperService(session, query.user_id, news_paper_id=id).info()
 
 @news_paper_router.post("/info/description", response_model=AnswerNewsPaperInfoDescription)
 async def news_paper_info_description(
@@ -74,7 +74,7 @@ async def news_paper_info_description(
     id: int = Query(description="ID газеты"),
     session = Depends(get_session()),
 ):
-    return await NewsPaperService(session, query.tg_id, news_paper_id=id).description()
+    return await NewsPaperService(session, query.user_id, news_paper_id=id).description()
 
 
 @news_paper_router.post("/readers", response_model=AnswerNewsPaperInfoReaders)
@@ -83,19 +83,19 @@ async def news_paper_readers(
     id: int = Query(description="ID газеты"),
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.tg_id, news_paper_id=id).readers()
+    return await NewsPaperService(session, query.user_id, news_paper_id=id).readers()
 
 @news_paper_router.post("/reader", response_model=AnswerReaderInfo)
 async def news_paper_reader(
     query: QueryBody,
     id: int = Query(description="ID газеты"),
-    tg_id: int | None = Query(None, description="ID читателя"),
+    user_id: int | None = Query(None, description="ID читателя"),
     session = Depends(get_session())
 ):
     return await NewsPaperService(
         session,
-        query.tg_id,
-        purpose_tg_id=tg_id,
+        query.user_id,
+        purpose_user_id=user_id,
         news_paper_id=id,
     ).reader()
 
@@ -106,7 +106,7 @@ async def news_paper_create(
     name: str = Query(description="Название новой газеты"),
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.tg_id).create(name)
+    return await NewsPaperService(session, query.user_id).create(name)
 
 
 @news_paper_router.put("/subscribe", response_model=AnswerNewsPaperInfo)
@@ -115,7 +115,7 @@ async def news_paper_subscribe(
     id: int = Query(description="ID газеты"),
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.tg_id, news_paper_id=id).subscribe()
+    return await NewsPaperService(session, query.user_id, news_paper_id=id).subscribe()
 
 
 @news_paper_router.patch("/unsubscribe", response_model=AnswerNewsPaperInfo)
@@ -124,7 +124,7 @@ async def news_paper_unsubscribe(
     id: int = Query(description="ID газеты"),
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.tg_id, news_paper_id=id).unsubscribe()
+    return await NewsPaperService(session, query.user_id, news_paper_id=id).unsubscribe()
 
 
 @news_paper_router.post("/notify", response_model=AnswerNewsPaperInfoReaders)
@@ -133,27 +133,27 @@ async def news_paper_notify(
     id: int = Query(description="ID газеты"),
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.tg_id, news_paper_id=id).notify()
+    return await NewsPaperService(session, query.user_id, news_paper_id=id).notify()
 
 
 @news_paper_router.patch("/editor/make", response_model=AnswerRedactRank)
 async def news_paper_make_editor(
     query: QueryBody,
     id: int = Query(description="ID газеты"),
-    tg_id: int = Query(description="Telegram ID пользователя"),
+    user_id: int = Query(description="ID пользователя"),
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.tg_id, purpose_tg_id=tg_id, news_paper_id=id).make_editor()
+    return await NewsPaperService(session, query.user_id, purpose_user_id=user_id, news_paper_id=id).make_editor()
 
 
 @news_paper_router.patch("/editor/fire", response_model=AnswerRedactRank)
 async def news_paper_fire_editor(
     query: QueryBody,
     id: int = Query(description="ID газеты"),
-    tg_id: int = Query(description="Telegram ID пользователя"),
+    user_id: int = Query(description="ID пользователя"),
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.tg_id, purpose_tg_id=tg_id, news_paper_id=id).fire_editor()
+    return await NewsPaperService(session, query.user_id, purpose_user_id=user_id, news_paper_id=id).fire_editor()
 
 @news_paper_router.post("/capture", response_model=AnswerNewsPaperInfo)
 async def news_paper_capture(
@@ -161,20 +161,20 @@ async def news_paper_capture(
     id: int = Query(description="ID газеты"),
     session=Depends(get_session()),
 ):
-    return await NewsPaperService(session, query.tg_id, news_paper_id=id).capture()
+    return await NewsPaperService(session, query.user_id, news_paper_id=id).capture()
 
 
 @news_paper_router.post("/give", response_model=AnswerNewsPaperGive)
 async def news_paper_give(
     query: QueryBody,
     id: int = Query(description="ID газеты"),
-    tg_id: int = Query(description="Telegram ID пользователя"),
+    user_id: int = Query(description="ID пользователя"),
     session=Depends(get_session()),
 ):
     return await NewsPaperService(
         session,
-        query.tg_id,
-        purpose_tg_id=tg_id,
+        query.user_id,
+        purpose_user_id=user_id,
         news_paper_id=id,
     ).give()
 
@@ -185,7 +185,7 @@ async def news_paper_settings(
     id: int = Query(description="ID газеты"),
     session=Depends(get_session()),
 ):
-    return await NewsPaperService(session, query.tg_id, news_paper_id=id).settings()
+    return await NewsPaperService(session, query.user_id, news_paper_id=id).settings()
 
 
 @news_paper_router.post("/settings/values", response_model=AnswerNewsPaperSettingValues)
@@ -194,7 +194,7 @@ async def news_paper_settings_values(
     id: int = Query(description="ID газеты"),
     session=Depends(get_session()),
 ):
-    return await NewsPaperService(session, query.tg_id, news_paper_id=id).settings_values()
+    return await NewsPaperService(session, query.user_id, news_paper_id=id).settings_values()
 
 
 @news_paper_router.patch("/settings/redact", response_model=AnswerNewsPaperSetting)
@@ -203,7 +203,7 @@ async def news_paper_settings_redact(
     id: int = Query(description="ID газеты"),
     session=Depends(get_session()),
 ):
-    return await NewsPaperService(session, query.tg_id, news_paper_id=id).settings_redact(query.parametrs)
+    return await NewsPaperService(session, query.user_id, news_paper_id=id).settings_redact(query.parametrs)
 
 
 @news_paper_router.patch("/settings/default", response_model=AnswerNewsPaperSetting)
@@ -212,4 +212,4 @@ async def news_paper_settings_default(
     id: int = Query(description="ID газеты"),
     session=Depends(get_session()),
 ):
-    return await NewsPaperService(session, query.tg_id, news_paper_id=id).settings_default(query.to_default)
+    return await NewsPaperService(session, query.user_id, news_paper_id=id).settings_default(query.to_default)

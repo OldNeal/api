@@ -25,7 +25,11 @@ class Settings:
     UVICORN_LOG_LEVEL = os.getenv('UVICORN_LOG_LEVEL', "WARNING")
     UVICORN_ACCESS_LOG = os.getenv('UVICORN_ACCESS_LOG', "f")
     
-    ADMIN_TG_IDS = [int(id) for id in os.getenv('ADMIN_TG_IDS').split(',')]  
+    ADMIN_USER_IDS = [int(id) for id in os.getenv('ADMIN_USER_IDS', '').split(',') if id]
+
+    REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')   
+    REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+    REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
 
     def get_db_url(self):
         return (f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@"
@@ -33,7 +37,7 @@ class Settings:
     
     @property
     def admins(self):
-        return self.ADMIN_TG_IDS
+        return self.ADMIN_USER_IDS
 
     @property
     def is_reload(self):
@@ -63,3 +67,4 @@ def use_route_names_as_operation_ids(app) -> None:
     for route in app.routes:
         if isinstance(route, APIRoute):
             route.operation_id = route.name
+
