@@ -19,6 +19,48 @@ class UserDAO(BaseDAO[UserDB]):
     async def query_by_tg_id(self, tg_id: int):
         return await self.find_one_or_none({'tg_id':tg_id})
 
+    async def search_users(
+        self,
+        user_id: int | None = None,
+        tg_id: int | None = None,
+        username: str | None = None,
+        name: str | None = None,
+    ):
+        filters = []
+        if user_id is not None:
+            filters.append(self.model.id == user_id)
+        elif tg_id is not None:
+            filters.append(self.model.tg_id == tg_id)
+        elif username and username.strip().lstrip('@'):
+            filters.append(
+                func.lower(TgUserDB.username).contains(
+                    username.strip().lstrip('@').lower(),
+                    autoescape=True,
+                )
+            )
+        elif name and name.strip():
+            filters.append(
+                func.lower(func.coalesce(self.model._name, TgUserDB.fullname)).contains(
+                    name.strip().lower(),
+                    autoescape=True,
+                )
+            )
+
+        query = (
+            select(self.model)
+            .outerjoin(TgUserDB, TgUserDB.tg_id == self.model.tg_id)
+            .order_by(self.model.id)
+        )
+        if filters:
+            query = query.where(or_(*filters))
+        if self.load and len(self.load) > 0:
+            query = query.options(*self.load)
+        result = await self.session.execute(query)
+        return result.scalars().all()
+
+    async def get_all_users(self):
+        return await self.search_users()
+
     async def get_organ_owner_by_organ_id(self, organ_id: int):
         try:
             query = select(self.model).join(MemberDB).filter_by(organ_id=organ_id, rank=0)

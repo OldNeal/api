@@ -16,6 +16,13 @@ class RedisLinks:
                 pipe.hset(self.links.GENERAL_HASH, user_id, tg_id)
             await pipe.execute()
 
+    async def delete_user(self, user_id: int, tg_id: int | None = None):
+        async with self.client.pipeline(transaction=True) as pipe:
+            pipe.hdel(self.links.GENERAL_HASH, user_id)
+            if tg_id is not None:
+                pipe.hdel(self.links.TG_HASH, tg_id)
+            await pipe.execute()
+
     @get_dao()
     async def cache_all(self, dao: DAO):
         users = await dao.user.find_all()

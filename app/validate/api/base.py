@@ -98,3 +98,7 @@ class AnswerMain(AnswerBaseBody):
 
 class AnswerLogFileNames(AnswerBaseBody):
     names: list[str]
+
+class AnswerUsersBody(AnswerBaseBody):
+    search_value: str | int | None = None
+    users: list[AnswerUserBody]

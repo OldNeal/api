@@ -14,3 +14,18 @@ class MainService(BaseService):
     
     async def get_telegram(self, tg_id: int | None = None):
         return await self.logic.get_telegram(tg_id)
+
+    async def search_users(
+        self,
+        user_id: int | None = None,
+        tg_id: int | None = None,
+        username: str | None = None,
+        name: str | None = None,
+    ):
+        return await self.logic.search_users(user_id, tg_id, username, name)
+
+    async def list_users(self):
+        return await self.logic.list_users()
+
+    async def delete_user(self, user_id: int):
+        return await self.logic.delete_user(user_id)

@@ -28,7 +28,7 @@ upseq_time = {
 
 class BeyonderLogic(BaseLogic):
     def get_upseq_time(sef, seq: int):
-        return datetime.now()+timedelta(days=upseq_time.get(seq-1)) if seq >= -1 else None
+        return datetime.now() + timedelta(days=upseq_time.get(seq-1)) if seq >= -1 else None
 
     def check_exist_seq(self, seq: int):
         if seq > 9 or seq < -1:

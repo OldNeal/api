@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query, Path
-from app.validate.api.base import QueryBody, AnswerBaseInfo, QueryUserUpdate, AnswerUserBody
+from app.validate.api.base import QueryBody, AnswerBaseInfo, QueryUserUpdate, AnswerUserBody, AnswerUsersBody
 from app.api.endpoints.beyonder import beyonder_router
 from app.api.endpoints.wiki import wiki_router
 from app.api.endpoints.stats import stats_router
@@ -35,6 +35,34 @@ async def user_telegram(
                    session = Depends(get_session())
                    ):
     return await MainService(session, purpose_user_id=user_id).get_telegram(tg_id)
+
+@main_router.get('/user/search', response_model=AnswerUsersBody)
+async def user_search(
+                   user_id: int | None = Query(None, description='ID пользователя'),
+                   tg_id: int | None = Query(None, description='Telegram ID пользователя'),
+                   username: str | None = Query(None, description='Telegram username'),
+                   name: str | None = Query(None, description='Обычное имя пользователя'),
+                   session = Depends(get_session())
+                   ):
+    return await MainService(session).search_users(user_id, tg_id, username, name)
+
+@main_router.get('/user/list', response_model=AnswerUsersBody)
+async def user_list(
+                   session = Depends(get_session())
+                   ):
+    return await MainService(session).list_users()
+
+@main_router.patch('/user/delete', response_model=AnswerUserBody)
+async def user_delete(
+                   query: QueryBody,
+                   user_id: int = Query(description='ID пользователя'),
+                   session = Depends(get_session())
+                   ):
+    return await MainService(
+        session,
+        user_id=query.user_id,
+        is_admin=query.is_admin,
+    ).delete_user(user_id)
 
 base_router.include_router(main_router)
 base_router.include_router(beyonder_router)
