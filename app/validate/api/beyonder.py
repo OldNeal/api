@@ -5,6 +5,8 @@ class Sequence(BaseAPIValidate):
     seq: str 
     number: int 
     path: str
+    path_id: int
+    ga_id: int
     emodzi: str | None = None
     custom_emodzi_id: str | None = None
 
@@ -12,11 +14,6 @@ class AnswerRedactSeq(AnswerBody):
     old: Sequence | None = None
     new: Sequence | None = None
     operation: Literal['up', 'down', 'add']
-
-class AnswerTimeInfo(AnswerBody):
-    next_upseq: datetime | None
-    last_upseq: datetime
-    upseq_days: int | None
 
 class AnswerTimeReplace(AnswerBody):
     old_time: datetime
@@ -42,6 +39,11 @@ class AnswerBeyonderInfo(AnswerBody):
                     custom_emodzi_id=data.beyonder.custom_emodzi_id
                 )
         return self
+
+class AnswerTimeInfo(AnswerBeyonderInfo):
+    next_upseq: datetime | None
+    last_upseq: datetime
+    upseq_days: int | None
 
 class AnswerBeyonderList(AnswerBaseBody):
     path: AnswerPathInfo

@@ -52,12 +52,13 @@ async def beyonder_dowseq(
                  ):
     return await BeyonderService(session, query.user_id, user_id, query.is_admin).downseq(seq, path_name)
 
-@beyonder_router.get('/time/info/{user_id}', response_model=AnswerTimeInfo)
+@beyonder_router.get('/time/info', response_model=AnswerTimeInfo)
 async def beyonder_time_info(
-                   user_id: int = Path(description='ID пользователя'),
+                   user_id: int = Query(description='ID пользователя'),
+                   to_raise: bool = Query(False, description='Вызывать ли исключение'),
                    session = Depends(get_session())
                    ):
-    return await BeyonderService(session, user_id).time_info()
+    return await BeyonderService(session, user_id).time_info(to_raise)
 
 @beyonder_router.patch('/time/replace', response_model=AnswerTimeReplace)
 async def beyonder_time_replace(

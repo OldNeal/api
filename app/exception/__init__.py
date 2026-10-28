@@ -1,4 +1,4 @@
-from .base import PermissionException,BaseException, BaseExceptionResponse, UserDontFind
+from .base import PermissionException, BaseException, BaseExceptionResponse, UserDontFind, DBError, RedisError
 from .beyonder import PathDontEnterException, SeqBusyException, UpseqNotComeException, DontBeyonderException, ALreadyBeyonderException, SeqDontExistException
 from .wiki import PathDontSearchException, PathDontEnterFilterException
 from .organ import DontMemberError, ALreadyOwnerError, DontEnterPurposeError, ExistRankError, ExistOrganError, InOneOrganError, ALreadyMemberError, OrganPermissioError, OrganPermissionNewRankError, OrganPermissionPurposeRankError, ClosenOrganError, HiddenOrganError
@@ -10,6 +10,8 @@ exceptions: list[type[BaseException]] = [
     SeqDontExistException,
     PermissionException,
     UserDontFind,
+    DBError, 
+    RedisError,
     PathDontEnterException,
     PathDontSearchException,
     UpseqNotComeException,
@@ -43,11 +45,11 @@ exceptions: list[type[BaseException]] = [
 
 exception_codes = {e.status_code:e for e in exceptions}
 
-def get_exception_codes(codes: list[int] | None = None, types:  list[str] | None = None):
+def get_exception_codes(codes: list[int] | None = None, types: list[str] | None = None):
+    base = {PermissionException.status_code:{'description':PermissionException.default_message, 'model':BaseExceptionResponse}}
     if codes:
-        return {k:{'description':v.default_message, 'model':BaseExceptionResponse} for k,v in exception_codes.items() if k in codes} 
-    elif types:
-        types.append('base')
-        return {k:{'description':v.default_message, 'model':BaseExceptionResponse} for k,v in exception_codes.items() if v.type() in types or v.type() + '.py' in types} 
+        return base | {k:{'description':v.default_message, 'model':BaseExceptionResponse} for k,v in exception_codes.items() if k in codes} 
+    elif types:    
+        return base | {k:{'description':v.default_message, 'model':BaseExceptionResponse} for k,v in exception_codes.items() if v.type() in types} 
     else:
         return {k:{'description':v.default_message, 'model':BaseExceptionResponse} for k,v in exception_codes.items()} 

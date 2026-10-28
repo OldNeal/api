@@ -72,7 +72,7 @@ class BeyonderLogic(BaseLogic):
         return AnswerRedactSeq(
             user=await self.query_body(self.user_id),
             purpose=await self.query_body(user.id),
-            new=Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name),
+            new=Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name, path_id=path.id, ga_id=path.ga_id),
             operation='add',
         )
   
@@ -114,8 +114,8 @@ class BeyonderLogic(BaseLogic):
         return AnswerRedactSeq(
             user=await self.query_body(self.user_id),
             purpose=await self.query_body(user.id),
-            new=Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name),
-            old=Sequence(seq=old_seq.name, number=old_seq.number, path=old_path.name),
+            new=Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name, path_id=path.id, ga_id=path.ga_id),
+            old=Sequence(seq=old_seq.name, number=old_seq.number, path=old_path.name, path_id=old_path.id, ga_id=old_path.ga_id),
             operation='up',
         )
     
@@ -145,13 +145,15 @@ class BeyonderLogic(BaseLogic):
         return AnswerRedactSeq(
             user=await self.query_body(self.user_id),
             purpose=await self.query_body(user.id),
-            new=(Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name) if user.beyonder else None),
-            old=Sequence(seq=old_seq.name, number=old_seq.number, path=old_path.name),
+            new=Sequence(seq=user.beyonder.seq_name, number=user.beyonder.seq_number, path=path.name, path_id=path.id, ga_id=path.ga_id) if user.beyonder else None,
+            old=Sequence(seq=old_seq.name, number=old_seq.number, path=old_path.name, path_id=old_path.id, ga_id=old_path.ga_id),
             operation='down',
         )
 
-    async def time_info(self):
+    async def time_info(self, to_raise: bool = False):
         user = await self.get_user(is_raise_not_beyonder=True)
+        if to_raise and user.beyonder.upseq_days > 0:
+            raise UpseqNotComeException(upseq_days=user.beyonder.upseq_days)
         body = await self.query_body(user.id)
         return AnswerTimeInfo(
             user=body,
@@ -159,7 +161,7 @@ class BeyonderLogic(BaseLogic):
             next_upseq=user.beyonder.next_upseq,
             last_upseq=user.beyonder.last_upseq,
             upseq_days=user.beyonder.upseq_days,
-        )
+        ).to_query(user)
     
     async def replace_time(self, new_time: datetime):
         self.check_permission()

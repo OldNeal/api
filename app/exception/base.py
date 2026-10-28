@@ -26,7 +26,7 @@ class BaseException(HTTPException):
 
     @classmethod
     def type(self):
-        return self.__module__.replace('app.exception.', '')
+        return self.__module__.replace('app.exception.', '').removesuffix('.py')
 
 class PermissionException(BaseException):
     default_message = 'Нет доступа'    

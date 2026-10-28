@@ -18,8 +18,8 @@ class BeyonderService(BaseService):
     async def downseq(self, new_seq: int | None = None, path_name: str | None = None):
         return await self.logic.downseq(new_seq, path_name)
     
-    async def time_info(self):
-        return await self.logic.time_info()
+    async def time_info(self, to_raise: bool = False):
+        return await self.logic.time_info(to_raise)
     
     async def replace_time(self, new_time):
         return await self.logic.replace_time(new_time)
