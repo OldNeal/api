@@ -21,11 +21,17 @@ class MainService(BaseService):
         tg_id: int | None = None,
         username: str | None = None,
         name: str | None = None,
+        page: int | None = None,
+        per_page: int = 5,
     ):
-        return await self.logic.search_users(user_id, tg_id, username, name)
+        return await self.logic.search_users(user_id, tg_id, username, name, page, per_page)
 
-    async def list_users(self):
-        return await self.logic.list_users()
+    async def list_users(
+        self,
+        page: int | None = None,
+        per_page: int = 5,
+        ):
+        return await self.logic.list_users(page, per_page)
 
     async def delete_user(self, user_id: int):
         return await self.logic.delete_user(user_id)

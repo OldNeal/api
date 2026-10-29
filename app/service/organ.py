@@ -12,23 +12,23 @@ class OrganService(BaseService):
     async def info(self):
         return await self.logic.info()
 
-    async def members(self):
-        return await self.logic.members()
+    async def members(self, page: int | None = None, per_page: int = 5):
+        return await self.logic.members(page=page, per_page=per_page)
     
     async def description(self):
         return await self.logic.description()
     
-    async def search(self, name: str):
-        return await self.logic.search(name)
+    async def search(self, name: str, page: int | None = None, per_page: int = 5):
+        return await self.logic.search(name, page, per_page)
 
-    async def list(self):
-        return await self.logic.list()
+    async def list(self, page: int | None = None, per_page: int = 5):
+        return await self.logic.list(page, per_page)
     
-    async def organ_top_members(self):
-        return await self.logic.organ_top_members()
+    async def organ_top_members(self, page: int | None = None, per_page: int = 5):
+        return await self.logic.organ_top_members(page, per_page)
     
-    async def organ_top_days(self):
-        return await self.logic.organ_top_days()
+    async def organ_top_days(self, page: int | None = None, per_page: int = 5):
+        return await self.logic.organ_top_days(page, per_page)
     
     async def login(self):
         return await self.logic.login()

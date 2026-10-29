@@ -204,15 +204,27 @@ class OrganLogic(BaseLogic):
         self.is_hidden(user, organ)
         return await self.return_organ_info(user, organ)
 
-    async def members(self, id: int | None = None):
+    async def members(
+        self,
+        id: int | None = None,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
         user = await self.get_user()
         organ = await self.check_exist_organ(id or self.organ_id or self.is_member(user).member.organ_id)
         self.is_hidden(user, organ)
+        members, count = await self.dao.user.get_members_by_organ_id_paginated(
+            organ.id,
+            page,
+            per_page,
+        )
         return AnswerOrganInfoMembers(
             user=self.return_query_body(user),
             id=organ.id,
             name=organ.name,
-            members=[await self.return_member_info(user, mbr) for mbr in await self.dao.user.get_members_by_organ_id(organ.id)]
+            members=[await self.return_member_info(user, mbr) for mbr in members],
+            page=self.pagination(page, per_page, count),
+            count=count,
         )
     
     async def description(self, id: int | None = None):
@@ -226,29 +238,37 @@ class OrganLogic(BaseLogic):
             description=organ.description
         )
 
-    async def search(self, name: str):
-        organs = await self.dao.organ.search_by_name(name)
+    async def search(self, name: str, page: int | None = None, per_page: int = 5):
+        organs, count = await self.dao.organ.search_by_name_paginated(name, page, per_page)
         return AnswerAllOrganInfo(
             search_value=name,
-            organs=await self.return_organs_info(organs)
+            organs=await self.return_organs_info(organs),
+            page=self.pagination(page, per_page, count),
+            count=count,
         )
 
-    async def list(self):
-        organs = await self.dao.organ.find_all()
+    async def list(self, page: int | None = None, per_page: int = 5):
+        organs, count = await self.dao.organ.find_all_paginated(page=page, per_page=per_page)
         return AnswerAllOrganInfo(
-            organs=await self.return_organs_info(organs)
+            organs=await self.return_organs_info(organs),
+            page=self.pagination(page, per_page, count),
+            count=count,
         )
 
-    async def organ_top_members(self):
-        organs = await self.dao.organ.find_all()
+    async def organ_top_members(self, page: int | None = None, per_page: int = 5):
+        organs, count = await self.dao.organ.top_by_members_paginated(page, per_page)
         return AnswerAllOrganInfo(
-            organs=await self.return_organs_info(sorted(organs, key=lambda x: len(x.members), reverse=True)[:6])
+            organs=await self.return_organs_info(organs),
+            page=self.pagination(page, per_page, count),
+            count=count,
         )
 
-    async def organ_top_days(self):
-        organs = await self.dao.organ.find_all()
+    async def organ_top_days(self, page: int | None = None, per_page: int = 5):
+        organs, count = await self.dao.organ.top_by_created_at_paginated(page, per_page)
         return AnswerAllOrganInfo(
-            organs=await self.return_organs_info(sorted(organs, key=lambda x: x.created_at)[:6])
+            organs=await self.return_organs_info(organs),
+            page=self.pagination(page, per_page, count),
+            count=count,
         )
 
 

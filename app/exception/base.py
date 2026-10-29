@@ -44,4 +44,8 @@ class DBError(BaseException):
     default_message = 'DB не работает'    
 
 class RedisError(BaseException):
-    default_message = 'Redis не работает'   
+    default_message = 'Redis не работает'
+
+class PageDontFindError(BaseException):
+    default_message = 'Станица не найдена'
+    status_code = 475

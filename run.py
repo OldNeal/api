@@ -51,7 +51,7 @@ async def handle_errors(request, exc):
         }
         for err in exc.errors()
     ]
-    response = BaseExceptionResponse(message="Ошибка валидации входных данных", status_code=400, content=formatted_errors)
+    response = BaseExceptionResponse(message="⚠️ Ошибка валидации входных данных в запросе", status_code=400, content=formatted_errors)
 
     return JSONResponse(status_code=response.status_code, content=response.model_dump())
 

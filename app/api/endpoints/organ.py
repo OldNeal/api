@@ -18,9 +18,11 @@ async def organ_member(
 @organ_router.get('/search', response_model=AnswerAllOrganInfo)
 async def organ_search(
                        name: str = Query(description='Имя искомой организации'), 
+                       page: int | None = Query(None, ge=0, description='Номер страницы'),
+                       per_page: int = Query(5, ge=1, description='Результатов на странице'),
                        session = Depends(get_session())
                        ):
-    return await OrganService(session).search(name)
+    return await OrganService(session).search(name, page, per_page)
  
 @organ_router.post('/info', response_model=AnswerOrganInfo)
 async def organ_info(
@@ -36,9 +38,16 @@ async def organ_info_members(
                          query: QueryBody, 
                          id: int | None = Query(None, description='ID организации'),
                          member_user_id: int | None = Query(None, description='ID участника'),
+                         page: int | None = Query(None, ge=0, description='Номер страницы'),
+                         per_page: int = Query(5, ge=1, description='Результатов на странице'),
                          session = Depends(get_session())
                          ):
-    return await OrganService(session, query.user_id, purpose_user_id=member_user_id, organ_id=id).members()
+    return await OrganService(
+        session,
+        query.user_id,
+        purpose_user_id=member_user_id,
+        organ_id=id,
+    ).members(page, per_page)
 
 @organ_router.post('/info/description', response_model=AnswerOrganInfoDescription)
 async def organ_info_description(
@@ -51,21 +60,27 @@ async def organ_info_description(
 
 @organ_router.get('/list', response_model=AnswerAllOrganInfo)
 async def organ_list(
+                         page: int | None = Query(None, ge=0, description='Номер страницы'),
+                         per_page: int = Query(5, ge=1, description='Результатов на странице'),
                          session = Depends(get_session())
                          ):
-    return await OrganService(session).list()
+    return await OrganService(session).list(page, per_page)
 
 @organ_router.get('/top/members', response_model=AnswerAllOrganInfo)
 async def organ_top_members(
+                      page: int | None = Query(None, ge=0, description='Номер страницы'),
+                      per_page: int = Query(5, ge=1, description='Результатов на странице'),
                       session = Depends(get_session())
                       ):
-    return await OrganService(session).organ_top_members()
+    return await OrganService(session).organ_top_members(page, per_page)
 
 @organ_router.get('/top/days', response_model=AnswerAllOrganInfo)
 async def organ_top_days(
+                      page: int | None = Query(None, ge=0, description='Номер страницы'),
+                      per_page: int = Query(5, ge=1, description='Результатов на странице'),
                       session = Depends(get_session())
                       ):
-    return await OrganService(session).organ_top_days()
+    return await OrganService(session).organ_top_days(page, per_page)
 
 @organ_router.put('/login', response_model=AnswerOrganInfo)
 async def organ_login(

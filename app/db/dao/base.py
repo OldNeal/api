@@ -24,6 +24,28 @@ class BaseDAO(Generic[T]):
             return result or 0
         except SQLAlchemyError as e:
             raise
+
+    async def paginate(self, query, page: int | None = None, per_page: int = 5):
+        try:
+            count_query = select(func.count()).select_from(query.order_by(None).subquery())
+            count = await self.session.scalar(count_query) or 0
+            if page is not None:
+                query = query.offset(page * per_page).limit(per_page)
+            result = await self.session.execute(query)
+            return list(result.unique().scalars().all()), count
+        except SQLAlchemyError:
+            raise
+
+    async def find_all_paginated(
+        self,
+        filters: dict | None = None,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        query = select(self.model).filter_by(**(filters or {})).order_by(self.model.id)
+        if self.load:
+            query = query.options(*self.load)
+        return await self.paginate(query, page, per_page)
     
     async def find_one_or_none_by_id(self, data_id: int):
         # Найти запись по ID

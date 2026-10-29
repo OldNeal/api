@@ -51,6 +51,8 @@ class MainLogic(BaseLogic):
         tg_id: int | None = None,
         username: str | None = None,
         name: str | None = None,
+        page: int | None = None,
+        per_page: int = 5,
     ):
         if (
             user_id is None
@@ -59,15 +61,32 @@ class MainLogic(BaseLogic):
             and not (name and name.strip())
         ):
             raise ParametrValidationException('Укажите хотя бы один параметр поиска')
-        users = await self.dao.user.search_users(user_id, tg_id, username, name)
+        users, count = await self.dao.user.search_users_paginated(
+            user_id,
+            tg_id,
+            username,
+            name,
+            page,
+            per_page,
+        )
         return AnswerUsersBody(
             search_value=self.check_is_not_none(user_id, tg_id, username, name),
-            users=[self.return_query_body(user) for user in users]
+            users=[self.return_query_body(user) for user in users],
+            count=count,
+            page=self.pagination(page, per_page, count),
             )
 
-    async def list_users(self):
-        users = await self.dao.user.get_all_users()
-        return AnswerUsersBody(users=[self.return_query_body(user) for user in users])
+    async def list_users(
+        self,
+        page: int | None = None,
+        per_page: int = 5,
+        ):
+        users, count = await self.dao.user.search_users_paginated(page=page, per_page=per_page)
+        return AnswerUsersBody(
+            users=[self.return_query_body(user) for user in users],
+            count=count,
+            page=self.pagination(page, per_page, count),
+            )
 
 
     async def delete_user(self, user_id: int):

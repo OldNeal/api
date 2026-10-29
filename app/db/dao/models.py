@@ -2,7 +2,7 @@ from app.db.dao.base import BaseDAO, AsyncSession
 from app.db.models.main import ChatDB, UserDB, TgChatDB, TgUserDB
 from app.db.models.beyonder import BeyonderDB, PathDB, SequenceDB, GreatAncientDB
 from app.db.models.organ import OrganDB, MemberDB
-from app.db.models.newspaper import NewsPaperDB, ReaderDB
+from app.db.models.newspaper import NewsPaperDB, ReaderDB, EDITOR_RANK
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select, update, delete, func, join, or_, all_, and_, any_
 from sqlalchemy.orm import selectinload, joinedload
@@ -13,13 +13,7 @@ class UserDAO(BaseDAO[UserDB]):
     model = UserDB
     load = [joinedload(model.beyonder).joinedload(BeyonderDB.seq).joinedload(SequenceDB.path).joinedload(PathDB.god)]
 
-    async def query_by_user_id(self, user_id: int):
-        return await self.find_one_or_none({'id':user_id})
-
-    async def query_by_tg_id(self, tg_id: int):
-        return await self.find_one_or_none({'tg_id':tg_id})
-
-    async def search_users(
+    def _search_users_query(
         self,
         user_id: int | None = None,
         tg_id: int | None = None,
@@ -49,17 +43,61 @@ class UserDAO(BaseDAO[UserDB]):
         query = (
             select(self.model)
             .outerjoin(TgUserDB, TgUserDB.tg_id == self.model.tg_id)
-            .order_by(self.model.id)
+            .order_by(
+                func.lower(
+                    func.coalesce(TgUserDB.fullname, TgUserDB.username, self.model._name, '')
+                ),
+                self.model.id,
+            )
         )
         if filters:
             query = query.where(or_(*filters))
-        if self.load and len(self.load) > 0:
+        if self.load:
             query = query.options(*self.load)
-        result = await self.session.execute(query)
-        return result.scalars().all()
+        return query
 
-    async def get_all_users(self):
-        return await self.search_users()
+    async def search_users_paginated(
+        self,
+        user_id: int | None = None,
+        tg_id: int | None = None,
+        username: str | None = None,
+        name: str | None = None,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        return await self.paginate(
+            self._search_users_query(user_id, tg_id, username, name),
+            page,
+            per_page,
+        )
+
+    async def query_by_user_id(self, user_id: int):
+        return await self.find_one_or_none({'id':user_id})
+
+    async def query_by_tg_id(self, tg_id: int):
+        return await self.find_one_or_none({'tg_id':tg_id})
+
+    async def search_users(
+        self,
+        user_id: int | None = None,
+        tg_id: int | None = None,
+        username: str | None = None,
+        name: str | None = None,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        query = self._search_users_query(user_id, tg_id, username, name)
+        if page is not None:
+            query = query.offset(page * per_page).limit(per_page)
+        result = await self.session.execute(query)
+        return result.unique().scalars().all()
+
+    async def get_all_users(
+        self,
+        page: int | None = None,
+        per_page: int = 5,
+        ):
+        return await self.search_users(page=page, per_page=per_page)
 
     async def get_organ_owner_by_organ_id(self, organ_id: int):
         try:
@@ -83,6 +121,22 @@ class UserDAO(BaseDAO[UserDB]):
         except SQLAlchemyError as e:
             raise
 
+    async def get_members_by_organ_id_paginated(
+        self,
+        organ_id: int,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        query = (
+            select(self.model)
+            .join(MemberDB)
+            .where(MemberDB.organ_id == organ_id)
+            .order_by(MemberDB.rank, self.model.id)
+        )
+        if self.load:
+            query = query.options(*self.load)
+        return await self.paginate(query, page, per_page)
+
     async def get_beyonders_by_path_id(self, path_id: int):
         try:
             query = select(self.model).join(BeyonderDB).join(SequenceDB).filter_by(path_id=path_id)
@@ -93,6 +147,23 @@ class UserDAO(BaseDAO[UserDB]):
             return record
         except SQLAlchemyError as e:
             raise
+
+    async def get_beyonders_by_path_id_paginated(
+        self,
+        path_id: int,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        query = (
+            select(self.model)
+            .join(BeyonderDB)
+            .join(SequenceDB)
+            .where(SequenceDB.path_id == path_id, BeyonderDB.ga_id.is_(None))
+            .order_by(SequenceDB.number, self.model.id)
+        )
+        if self.load:
+            query = query.options(*self.load)
+        return await self.paginate(query, page, per_page)
 
     async def get_ga_by_path_id(self, path_id: int):
         try:
@@ -200,8 +271,43 @@ class PathDAO(BaseDAO[PathDB]):
         except SQLAlchemyError as e:
             raise
 
+    async def search_by_name_paginated(
+        self,
+        name: str,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        query = (
+            select(self.model)
+            .join(SequenceDB)
+            .where(or_(*[
+                func.lower(SequenceDB.name).contains(f'%{term}%')
+                for term in name.lower().split(' ')
+            ]))
+            .distinct()
+            .order_by(self.model.id)
+        )
+        if self.load:
+            query = query.options(*self.load)
+        return await self.paginate(query, page, per_page)
+
     async def query_many_by_ga_id(self, ga_id: int):
         return await self.find_all({'ga_id':ga_id})
+
+    async def query_many_by_ga_id_paginated(
+        self,
+        ga_id: int,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        query = (
+            select(self.model)
+            .where(self.model.ga_id == ga_id)
+            .order_by(self.model.id)
+        )
+        if self.load:
+            query = query.options(*self.load)
+        return await self.paginate(query, page, per_page)
 
 class SequenceDAO(BaseDAO[SequenceDB]):
     model = SequenceDB
@@ -215,10 +321,48 @@ class SequenceDAO(BaseDAO[SequenceDB]):
     async def query_many_by_path_id(self, path_id: int):
         return await self.find_all({'path_id':path_id})
 
+    async def search_by_name_paginated(
+        self,
+        name: str,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        terms = [term for term in name.casefold().split() if term]
+        query = select(self.model)
+        if terms:
+            query = query.where(or_(*[
+                func.lower(self.model.name).contains(term)
+                for term in terms
+            ]))
+        query = query.order_by(self.model.path_id, self.model.number, self.model.id)
+        if self.load:
+            query = query.options(*self.load)
+        return await self.paginate(query, page, per_page)
+
+    async def query_many_by_path_id_paginated(
+        self,
+        path_id: int,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        query = (
+            select(self.model)
+            .where(self.model.path_id == path_id)
+            .order_by(self.model.number, self.model.id)
+        )
+        if self.load:
+            query = query.options(*self.load)
+        return await self.paginate(query, page, per_page)
+
 
 class GreatAncientDAO(BaseDAO[GreatAncientDB]):
     model = GreatAncientDB
     load = [selectinload(model.paths).selectinload(PathDB.sequence_datas)]
+
+    async def get_by_group(self, group: str):
+        query = select(self.model).where(self.model.group == group).order_by(self.model.id)
+        result = await self.session.execute(query)
+        return result.scalars().all()
 
     async def search_by_name(self, name: str):
         try:
@@ -231,6 +375,20 @@ class GreatAncientDAO(BaseDAO[GreatAncientDB]):
         except SQLAlchemyError as e:
             raise
 
+    async def search_by_name_paginated(
+        self,
+        name: str,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        query = select(self.model).where(or_(*[
+            func.lower(self.model.name).contains(f'%{term}%')
+            for term in name.split(' ')
+        ])).order_by(self.model.id)
+        if self.load:
+            query = query.options(*self.load)
+        return await self.paginate(query, page, per_page)
+
     async def gropus(self):
         try:
             query = select(self.model.group)
@@ -241,6 +399,17 @@ class GreatAncientDAO(BaseDAO[GreatAncientDB]):
             return list(set(record))
         except SQLAlchemyError as e:
             raise
+
+    async def groups_paginated(self, page: int | None = None, per_page: int = 5):
+        query = select(self.model.group).distinct().order_by(self.model.group)
+        count_query = select(func.count()).select_from(
+            select(self.model.group).distinct().subquery()
+        )
+        count = await self.session.scalar(count_query) or 0
+        if page is not None:
+            query = query.offset(page * per_page).limit(per_page)
+        result = await self.session.execute(query)
+        return list(result.scalars().all()), count
 
 
 class OrganDAO(BaseDAO[OrganDB]):
@@ -257,6 +426,69 @@ class OrganDAO(BaseDAO[OrganDB]):
             return record
         except SQLAlchemyError as e:
             raise
+
+    async def search_by_name_paginated(
+        self,
+        name: str,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        query = (
+            select(self.model)
+            .where(or_(*[
+                func.lower(self.model.name).contains(f'%{term}%')
+                for term in name.lower().split(' ')
+            ]))
+            .order_by(self.model.id)
+        )
+        if self.load:
+            query = query.options(*self.load)
+        return await self.paginate(query, page, per_page)
+
+    async def top_by_members_paginated(
+        self,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        top_organs = (
+            select(
+                self.model.id.label('id'),
+                func.count(MemberDB.user_id).label('member_count'),
+            )
+            .outerjoin(MemberDB)
+            .group_by(self.model.id)
+            .order_by(func.count(MemberDB.user_id).desc(), self.model.id)
+            .limit(6)
+            .subquery()
+        )
+        query = (
+            select(self.model)
+            .join(top_organs, self.model.id == top_organs.c.id)
+            .order_by(top_organs.c.member_count.desc(), self.model.id)
+        )
+        if self.load:
+            query = query.options(*self.load)
+        return await self.paginate(query, page, per_page)
+
+    async def top_by_created_at_paginated(
+        self,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        top_organs = (
+            select(self.model.id.label('id'), self.model.created_at.label('created_at'))
+            .order_by(self.model.created_at, self.model.id)
+            .limit(6)
+            .subquery()
+        )
+        query = (
+            select(self.model)
+            .join(top_organs, self.model.id == top_organs.c.id)
+            .order_by(top_organs.c.created_at, self.model.id)
+        )
+        if self.load:
+            query = query.options(*self.load)
+        return await self.paginate(query, page, per_page)
 
 class MemberDAO(BaseDAO[MemberDB]):
     model = MemberDB
@@ -285,6 +517,67 @@ class NewsPaperDAO(BaseDAO[NewsPaperDB]):
         except SQLAlchemyError as e:
             raise
 
+    async def search_by_name_paginated(
+        self,
+        name: str,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        query = (
+            select(self.model)
+            .where(or_(*[
+                func.lower(self.model.name).contains(f'%{term}%')
+                for term in name.lower().split(' ')
+            ]))
+            .order_by(self.model.id)
+        )
+        if self.load:
+            query = query.options(*self.load)
+        return await self.paginate(query, page, per_page)
+
+    async def get_for_user_paginated(
+        self,
+        user_id: int,
+        page: int | None = None,
+        per_page: int = 5,
+        editors_only: bool = False,
+    ):
+        query = (
+            select(self.model)
+            .join(ReaderDB)
+            .where(ReaderDB.user_id == user_id)
+        )
+        if editors_only:
+            editor_rank = func.coalesce(
+                self.model.setting['editor_rank'].as_integer(),
+                EDITOR_RANK,
+            )
+            query = query.where(ReaderDB.rank <= editor_rank)
+        query = query.order_by(self.model.id)
+        if self.load:
+            query = query.options(*self.load)
+        return await self.paginate(query, page, per_page)
+
+    async def get_for_subscribe_paginated(
+        self,
+        user_id: int,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        subscribed = (
+            select(ReaderDB.id)
+            .where(
+                ReaderDB.news_paper_id == self.model.id,
+                ReaderDB.user_id == user_id,
+                ReaderDB.user_id == user_id,
+            )
+            .exists()
+        )
+        query = select(self.model).where(~subscribed).order_by(self.model.id)
+        if self.load:
+            query = query.options(*self.load)
+        return await self.paginate(query, page, per_page)
+
 class ReaderDAO(BaseDAO[ReaderDB]):
     model = ReaderDB
     load = [selectinload(model.user)]
@@ -297,6 +590,21 @@ class ReaderDAO(BaseDAO[ReaderDB]):
 
     async def get_members(self, organ_id: int):
         return await self.find_all({'news_paper_id':organ_id})
+
+    async def get_readers_by_paper_id_paginated(
+        self,
+        news_paper_id: int,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        query = (
+            select(self.model)
+            .where(self.model.news_paper_id == news_paper_id)
+            .order_by(self.model.rank, self.model.user_id)
+        )
+        if self.load:
+            query = query.options(*self.load)
+        return await self.paginate(query, page, per_page)
 
 class DAO:
     def __init__(self, session: AsyncSession):

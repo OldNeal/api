@@ -30,5 +30,5 @@ class BeyonderService(BaseService):
     async def kill(self):
         return await self.logic.kill()
 
-    async def list(self, path_id: int):
-        return await self.logic.list(path_id)
+    async def list(self, path_id: int, page: int | None = None, per_page: int = 5):
+        return await self.logic.list(path_id, page, per_page)

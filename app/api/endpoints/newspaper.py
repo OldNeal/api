@@ -27,38 +27,48 @@ news_paper_router = APIRouter(
 @news_paper_router.get("/search", response_model=AnswerAllNewsPaperInfo)
 async def news_paper_search(
     name: str = Query(description="Название газеты"),
+    page: int | None = Query(None, ge=0, description="Номер страницы"),
+    per_page: int = Query(5, ge=1, description="Результатов на странице"),
     session = Depends(get_session()),
 ):
-    return await NewsPaperService(session).search(name)
+    return await NewsPaperService(session).search(name, page, per_page)
 
 
 @news_paper_router.post("/all", response_model=AnswerAllNewsPaperInfo)
 async def news_paper_all(
     query: QueryBody,
+    page: int | None = Query(None, ge=0, description="Номер страницы"),
+    per_page: int = Query(5, ge=1, description="Результатов на странице"),
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.user_id).all()
+    return await NewsPaperService(session, query.user_id).all(page, per_page)
 
 @news_paper_router.post("/list", response_model=AnswerAllNewsPaperInfo)
 async def news_paper_list(
     query: QueryBody,
+    page: int | None = Query(None, ge=0, description="Номер страницы"),
+    per_page: int = Query(5, ge=1, description="Результатов на странице"),
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.user_id).news_papers()
+    return await NewsPaperService(session, query.user_id).news_papers(page, per_page)
 
 @news_paper_router.post("/editors", response_model=AnswerAllNewsPaperInfo)
 async def news_paper_list_where_editor(
     query: QueryBody,
+    page: int | None = Query(None, ge=0, description="Номер страницы"),
+    per_page: int = Query(5, ge=1, description="Результатов на странице"),
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.user_id).news_papers_where_editor()
+    return await NewsPaperService(session, query.user_id).news_papers_where_editor(page, per_page)
 
 @news_paper_router.post("/for_subscribe", response_model=AnswerAllNewsPaperInfo)
 async def news_paper_for_subscribe(
     query: QueryBody,
+    page: int | None = Query(None, ge=0, description="Номер страницы"),
+    per_page: int = Query(5, ge=1, description="Результатов на странице"),
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.user_id).news_papers_for_subscribe()
+    return await NewsPaperService(session, query.user_id).news_papers_for_subscribe(page, per_page)
 
 @news_paper_router.post("/info", response_model=AnswerNewsPaperInfo)
 async def news_paper_info(
@@ -81,9 +91,11 @@ async def news_paper_info_description(
 async def news_paper_readers(
     query: QueryBody,
     id: int = Query(description="ID газеты"),
+    page: int | None = Query(None, ge=0, description="Номер страницы"),
+    per_page: int = Query(5, ge=1, description="Результатов на странице"),
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.user_id, news_paper_id=id).readers()
+    return await NewsPaperService(session, query.user_id, news_paper_id=id).readers(page, per_page)
 
 @news_paper_router.post("/reader", response_model=AnswerReaderInfo)
 async def news_paper_reader(
@@ -131,9 +143,11 @@ async def news_paper_unsubscribe(
 async def news_paper_notify(
     query: QueryBody,
     id: int = Query(description="ID газеты"),
+    page: int | None = Query(None, ge=0, description="Номер страницы"),
+    per_page: int = Query(5, ge=1, description="Результатов на странице"),
     session = Depends(get_session())
 ):
-    return await NewsPaperService(session, query.user_id, news_paper_id=id).notify()
+    return await NewsPaperService(session, query.user_id, news_paper_id=id).notify(page, per_page)
 
 
 @news_paper_router.patch("/editor/make", response_model=AnswerRedactRank)

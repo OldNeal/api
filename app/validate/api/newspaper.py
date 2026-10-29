@@ -1,4 +1,4 @@
-from app.validate.api.base import AnswerBody, AnswerBaseBody, QueryBody, ReaderInfo, ForButtons
+from app.validate.api.base import AnswerBody, AnswerBaseBody, QueryBody, ReaderInfo, ForButtons, Page
 from app.validate.logic.setting import OrganSettingValidate
 from app.validate.api.organ import OrganSettingDefault
 
@@ -22,6 +22,8 @@ class AnswerNewsPaperInfo(AnswerBody):
 
 class AnswerNewsPaperInfoReaders(AnswerNewsPaperInfoBase, AnswerBody):
     readers: list[AnswerReaderInfo]
+    page: Page | None = None
+    count: int = 0
 
 class AnswerNewsPaperInfoDescription(AnswerNewsPaperInfoBase, AnswerBody):
     description: str | None = None
@@ -29,6 +31,8 @@ class AnswerNewsPaperInfoDescription(AnswerNewsPaperInfoBase, AnswerBody):
 class AnswerAllNewsPaperInfo(AnswerBaseBody):
     search_value: str | None = None
     news_papers: list[NewsPaperInfo]
+    page: Page | None = None
+    count: int = 0
 
 class AnswerRedactRank(AnswerBody):
     news_paper: NewsPaperInfo

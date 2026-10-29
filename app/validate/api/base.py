@@ -13,6 +13,10 @@ class TelegramBody(BaseBody):
     username: str | None = None
     fullname: str | None = None
 
+    @property
+    def name(self):
+        return self.fullname or self.username
+
 class AnswerUserBody(BaseAPIValidate):
     user_id: int
     name: str | None = None
@@ -99,6 +103,12 @@ class AnswerMain(AnswerBaseBody):
 class AnswerLogFileNames(AnswerBaseBody):
     names: list[str]
 
+class Page(BaseAPIValidate):
+    number: int
+    max: int
+
 class AnswerUsersBody(AnswerBaseBody):
     search_value: str | int | None = None
     users: list[AnswerUserBody]
+    page: Page | None = None
+    count: int = 0

@@ -90,6 +90,8 @@ async def beyonder_kill(
 @beyonder_router.get('/list', response_model=AnswerBeyonderList)
 async def beyonder_list(
                    path_id: int = Query(description='ID Пути'),
+                   page: int | None = Query(None, ge=0, description='Номер страницы'),
+                   per_page: int = Query(5, ge=1, description='Результатов на странице'),
                    session = Depends(get_session())
                    ):
-    return await BeyonderService(session).list(path_id)
+    return await BeyonderService(session).list(path_id, page, per_page)

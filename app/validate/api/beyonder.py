@@ -1,4 +1,4 @@
-from app.validate.api.base import AnswerBaseBody, UserDB, datetime, QueryBody, timedelta, Literal, BaseAPIValidate, AnswerBody, BeyonderInfo, ForButtons
+from app.validate.api.base import AnswerBaseBody, UserDB, datetime, QueryBody, timedelta, Literal, BaseAPIValidate, AnswerBody, BeyonderInfo, ForButtons, Page
 from app.validate.api.wiki import AnswerPathInfo
 
 class Sequence(BaseAPIValidate):
@@ -49,3 +49,5 @@ class AnswerBeyonderList(AnswerBaseBody):
     path: AnswerPathInfo
     ga: AnswerBeyonderInfo | None = None
     beyonders: list[AnswerBeyonderInfo]
+    page: Page | None = None
+    count: int = 0

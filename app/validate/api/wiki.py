@@ -1,4 +1,4 @@
-from app.validate.api.base import AnswerBaseBody, datetime
+from app.validate.api.base import AnswerBaseBody, datetime, Page
 from app.db.models.beyonder import SequenceDB, PathDB, GreatAncientDB
 
 class AnswerSeqInfo(AnswerBaseBody):
@@ -54,8 +54,7 @@ class AnswerGroupInfo(AnswerBaseBody):
     gas: list[AnswerGAInfo] 
 
     @classmethod
-    def to_query(cls, gas: list[GreatAncientDB]):
-        group_name = gas[0].group
+    def to_query(cls, group_name: str, gas: list[GreatAncientDB]):
         gas = [AnswerGAInfo(name=g.name, ga_id=g.id, group=g.group, emodzi=g.emodzi, custom_emodzi_id=g.custom_emodzi_id) for g in gas]
         return cls(group_name=group_name, gas=gas)
     
@@ -66,35 +65,41 @@ class AnswerGroupInfo(AnswerBaseBody):
 class AnswerSeqSearchInfo(AnswerBaseBody):
     search_value: str | None = None
     seqs: list[AnswerSeqInfo] | None = None
+    page: Page | None = None
+    count: int = 0
 
     @classmethod
-    def to_query(cls, search_value: str, seqs: list[SequenceDB]):
+    def to_query(cls, search_value: str, seqs: list[SequenceDB], page: Page | None = None, count: int = 0):
         if seqs:
             seqs = [AnswerSeqInfo(seq_id=s.id, number=s.number, name=s.name, path_id=s.path_id) for s in seqs]
-            return cls(search_value=search_value, seqs=seqs)
-        return cls(search_value=search_value)
+            return cls(search_value=search_value, seqs=seqs, page=page, count=count)
+        return cls(search_value=search_value, seqs=[], page=page, count=count)
     
 class AnswerPathSearchInfo(AnswerBaseBody):
     search_value: str | None = None
     paths: list[AnswerPathInfo] | None = None
+    page: Page | None = None
+    count: int = 0
 
     @classmethod
-    def to_query(cls, search_value: str, paths: list[PathDB]):
+    def to_query(cls, search_value: str, paths: list[PathDB], page: Page | None = None, count: int = 0):
         if paths:
             paths = [AnswerPathInfo(name=p.name, path_id=p.id, group=p.group, emodzi=p.emodzi, custom_emodzi_id=p.custom_emodzi_id) for p in paths]
-            return cls(search_value=search_value, paths=paths)
-        return cls(search_value=search_value)
+            return cls(search_value=search_value, paths=paths, page=page, count=count)
+        return cls(search_value=search_value, paths=[], page=page, count=count)
 
 class AnswerGASearchInfo(AnswerBaseBody):
     search_value: str | None = None
     gas: list[AnswerGAInfo] | None = None
+    page: Page | None = None
+    count: int = 0
     
     @classmethod
-    def to_query(cls, search_value: str, gas: list[GreatAncientDB]):
+    def to_query(cls, search_value: str, gas: list[GreatAncientDB], page: Page | None = None, count: int = 0):
         if gas:
             new_gas = [AnswerGAInfo(name=g.name, ga_id=g.id, group=g.group, emodzi=g.emodzi, custom_emodzi_id=g.custom_emodzi_id) for g in gas]
-            return cls(search_value=search_value, gas=new_gas)
-        return cls(search_value=search_value)
+            return cls(search_value=search_value, gas=new_gas, page=page, count=count)
+        return cls(search_value=search_value, gas=[], page=page, count=count)
     
 
 
@@ -104,33 +109,41 @@ class AnswerGASearchInfo(AnswerBaseBody):
 
 class AnswerAllSeqInfo(AnswerBaseBody):
     seqs: list[AnswerSeqInfo] | None = None
+    page: Page | None = None
+    count: int = 0
 
     @classmethod
-    def to_query(cls, seqs: list[SequenceDB]):
+    def to_query(cls, seqs: list[SequenceDB], page: Page | None = None, count: int = 0):
         if seqs:
             seqs = [AnswerSeqInfo(seq_id=s.id, number=s.number, name=s.name, path_id=s.path_id) for s in seqs]
-            return cls(seqs=seqs)
-        return cls()
+            return cls(seqs=seqs, page=page, count=count)
+        return cls(seqs=[], page=page, count=count)
     
 class AnswerAllPathInfo(AnswerBaseBody):
     paths: list[AnswerPathInfo] | None = None
+    page: Page | None = None
+    count: int = 0
 
     @classmethod
-    def to_query(cls, paths: list[PathDB]):
+    def to_query(cls, paths: list[PathDB], page: Page | None = None, count: int = 0):
         if paths:
             paths = [AnswerPathInfo(name=p.name, path_id=p.id, group=p.group, emodzi=p.emodzi, custom_emodzi_id=p.custom_emodzi_id) for p in paths]
-            return cls(paths=paths)
-        return cls()
+            return cls(paths=paths, page=page, count=count)
+        return cls(paths=[], page=page, count=count)
 
 class AnswerAllGAInfo(AnswerBaseBody):
     gas: list[AnswerGAInfo] | None = None
+    page: Page | None = None
+    count: int = 0
     
     @classmethod
-    def to_query(cls, gas: list[GreatAncientDB]):
+    def to_query(cls, gas: list[GreatAncientDB], page: Page | None = None, count: int = 0):
         if gas:
             new_gas = [AnswerGAInfo(name=g.name, ga_id=g.id, group=g.group, emodzi=g.emodzi, custom_emodzi_id=g.custom_emodzi_id) for g in gas]
-            return cls(gas=new_gas)
-        return cls()
+            return cls(gas=new_gas, page=page, count=count)
+        return cls(gas=[], page=page, count=count)
     
 class AnswerAllGroupInfo(AnswerBaseBody):
     groups: list[str]
+    page: Page | None = None
+    count: int = 0

@@ -27,45 +27,67 @@ group_router = APIRouter(prefix='/group', tags=['group'])
 @seq_router.get('/search', response_model=AnswerSeqSearchInfo)
 async def search_seq(
     value: str = Query(description='Запрос для поиска'),
+    page: int | None = Query(None, ge=0, description='Номер страницы'),
+    per_page: int = Query(5, ge=1, description='Результатов на странице'),
     session=Depends(get_session()),
 ):
-    return await PathService(session).seq_search(value)
+    return await PathService(session).seq_search(value, page, per_page)
 
 
 @path_router.get('/search', response_model=AnswerPathSearchInfo)
 async def search_path(
     value: str = Query(description='Запрос для поиска'),
+    page: int | None = Query(None, ge=0, description='Номер страницы'),
+    per_page: int = Query(5, ge=1, description='Результатов на странице'),
     session=Depends(get_session()),
 ):
-    return await PathService(session).search(value)
+    return await PathService(session).search(value, page, per_page)
 
 
 @ga_router.get('/search', response_model=AnswerGASearchInfo)
 async def search_ga(
     value: str = Query(description='Запрос для поиска'),
+    page: int | None = Query(None, ge=0, description='Номер страницы'),
+    per_page: int = Query(5, ge=1, description='Результатов на странице'),
     session=Depends(get_session()),
 ):
-    return await PathService(session).ga_search(value)
+    return await PathService(session).ga_search(value, page, per_page)
 
 
 @seq_router.get('/all', response_model=AnswerAllSeqInfo)
-async def get_seqs(session=Depends(get_session())):
-    return await PathService(session).seqs()
+async def get_seqs(
+    page: int | None = Query(None, ge=0, description='Номер страницы'),
+    per_page: int = Query(5, ge=1, description='Результатов на странице'),
+    session=Depends(get_session()),
+):
+    return await PathService(session).seqs(page, per_page)
 
 
 @path_router.get('/all', response_model=AnswerAllPathInfo)
-async def get_paths(session=Depends(get_session())):
-    return await PathService(session).paths()
+async def get_paths(
+    page: int | None = Query(None, ge=0, description='Номер страницы'),
+    per_page: int = Query(5, ge=1, description='Результатов на странице'),
+    session=Depends(get_session()),
+):
+    return await PathService(session).paths(page, per_page)
 
 
 @ga_router.get('/all', response_model=AnswerAllGAInfo)
-async def get_gas(session=Depends(get_session())):
-    return await PathService(session).gas()
+async def get_gas(
+    page: int | None = Query(None, ge=0, description='Номер страницы'),
+    per_page: int = Query(5, ge=1, description='Результатов на странице'),
+    session=Depends(get_session()),
+):
+    return await PathService(session).gas(page, per_page)
 
 
 @group_router.get('/all', response_model=AnswerAllGroupInfo)
-async def get_groups(session=Depends(get_session())):
-    return await PathService(session).groups()
+async def get_groups(
+    page: int | None = Query(None, ge=0, description='Номер страницы'),
+    per_page: int = Query(5, ge=1, description='Результатов на странице'),
+    session=Depends(get_session()),
+):
+    return await PathService(session).groups(page, per_page)
 
 
 @seq_router.get('', response_model=AnswerSeqFullInfo)
@@ -115,17 +137,21 @@ async def get_seq_by_path_id(
 @path_router.get('/seqs', response_model=AnswerAllSeqInfo)
 async def get_seqs_by_path_id(
     path_id: int = Query(description='ID пути'),
+    page: int | None = Query(None, ge=0, description='Номер страницы'),
+    per_page: int = Query(5, ge=1, description='Результатов на странице'),
     session=Depends(get_session()),
 ):
-    return await PathService(session).seqs_by_path_id(path_id)
+    return await PathService(session).seqs_by_path_id(path_id, page, per_page)
 
 
 @ga_router.get('/paths', response_model=AnswerAllPathInfo)
 async def get_path_by_ga_id(
     ga_id: int = Query(description='ID Великого древнего'),
+    page: int | None = Query(None, ge=0, description='Номер страницы'),
+    per_page: int = Query(5, ge=1, description='Результатов на странице'),
     session=Depends(get_session()),
 ):
-    return await PathService(session).path_by_ga_id(ga_id)
+    return await PathService(session).path_by_ga_id(ga_id, page, per_page)
 
 
 wiki_router.include_router(seq_router)

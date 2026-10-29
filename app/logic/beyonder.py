@@ -210,8 +210,12 @@ class BeyonderLogic(BaseLogic):
             purpose=await self.query_body(user.id),
         )
 
-    async def list(self, path_id: int):
-        beyonders = await self.dao.user.get_beyonders_by_path_id(path_id)
+    async def list(self, path_id: int, page: int | None = None, per_page: int = 5):
+        beyonders, count = await self.dao.user.get_beyonders_by_path_id_paginated(
+            path_id,
+            page,
+            per_page,
+        )
         ga = await self.dao.user.get_ga_by_path_id(path_id)
         path = await self.dao.path.query_by_id(path_id)
         return AnswerBeyonderList(
@@ -223,5 +227,7 @@ class BeyonderLogic(BaseLogic):
                 custom_emodzi_id=path.custom_emodzi_id
             ),
                 ga=AnswerBeyonderInfo(user=self.return_query_body(ga), purpose=self.return_query_body(ga)).to_query(ga) if ga else None,
-                beyonders=[AnswerBeyonderInfo(user=self.return_query_body(bndr), purpose=self.return_query_body(bndr)).to_query(bndr) for bndr in sorted([bndr for bndr in beyonders if bndr.beyonder.ga is None], key=lambda x: x.beyonder.seq.number)]
+                beyonders=[AnswerBeyonderInfo(user=self.return_query_body(bndr), purpose=self.return_query_body(bndr)).to_query(bndr) for bndr in beyonders],
+                page=self.pagination(page, per_page, count),
+                count=count,
             )

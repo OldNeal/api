@@ -137,30 +137,57 @@ class NewsPaperLogic(BaseLogic):
 
 
 
-    async def all(self):
-        data = await self.dao.news_paper.find_all()
-        return AnswerAllNewsPaperInfo(news_papers=await self.return_news_papers_info(list(data)))
+    async def all(self, page: int | None = None, per_page: int = 5):
+        data, count = await self.dao.news_paper.find_all_paginated(page=page, per_page=per_page)
+        return AnswerAllNewsPaperInfo(
+            news_papers=await self.return_news_papers_info(data),
+            page=self.pagination(page, per_page, count),
+            count=count,
+        )
 
-    async def news_papers_where_editor(self):
+    async def news_papers_where_editor(self, page: int | None = None, per_page: int = 5):
         user = await self.get_user(self.user_id)
-        await user.awaitable_attrs.readers
-        return AnswerAllNewsPaperInfo(news_papers=await self.return_news_papers_info([r.news_paper for r in user.readers if r.is_editor]))
+        papers, count = await self.dao.news_paper.get_for_user_paginated(
+            user.id,
+            page,
+            per_page,
+            editors_only=True,
+        )
+        return AnswerAllNewsPaperInfo(
+            news_papers=await self.return_news_papers_info(papers),
+            page=self.pagination(page, per_page, count),
+            count=count,
+        )
 
-    async def news_papers_for_subscribe(self):
-        data = await self.dao.news_paper.find_all()
+    async def news_papers_for_subscribe(self, page: int | None = None, per_page: int = 5):
         user = await self.get_user(self.user_id)
-        return AnswerAllNewsPaperInfo(news_papers=await self.return_news_papers_info([p for p in data if user.id not in p.reader_user_ids]))
+        papers, count = await self.dao.news_paper.get_for_subscribe_paginated(
+            user.id,
+            page,
+            per_page,
+        )
+        return AnswerAllNewsPaperInfo(
+            news_papers=await self.return_news_papers_info(papers),
+            page=self.pagination(page, per_page, count),
+            count=count,
+        )
 
-    async def news_papers(self):
+    async def news_papers(self, page: int | None = None, per_page: int = 5):
         user = await self.get_user(self.user_id)
-        await user.awaitable_attrs.readers
-        return AnswerAllNewsPaperInfo(news_papers=await self.return_news_papers_info(list(user.news_papers.values())))
+        papers, count = await self.dao.news_paper.get_for_user_paginated(user.id, page, per_page)
+        return AnswerAllNewsPaperInfo(
+            news_papers=await self.return_news_papers_info(papers),
+            page=self.pagination(page, per_page, count),
+            count=count,
+        )
 
-    async def search(self, value: str):
-        news_papers = await self.dao.news_paper.search_by_name(value)
+    async def search(self, value: str, page: int | None = None, per_page: int = 5):
+        news_papers, count = await self.dao.news_paper.search_by_name_paginated(value, page, per_page)
         return AnswerAllNewsPaperInfo(
             search_value=value,
             news_papers=await self.return_news_papers_info(news_papers),
+            page=self.pagination(page, per_page, count),
+            count=count,
         )
 
     async def info(self):
@@ -182,15 +209,21 @@ class NewsPaperLogic(BaseLogic):
             description=news_paper.description,
         )
 
-    async def readers(self):
+    async def readers(self, page: int | None = None, per_page: int = 5):
         user = await self.get_user(self.user_id)
         news_paper = await self.check_exist_news_paper(self.news_paper_id)
-        await news_paper.awaitable_attrs.readers
+        readers, count = await self.dao.reader.get_readers_by_paper_id_paginated(
+            news_paper.id,
+            page,
+            per_page,
+        )
         return AnswerNewsPaperInfoReaders(
             user=self.return_query_body(user),
             id=news_paper.id,
             name=news_paper.name,
-            readers=[await self.return_reader_info(reader, news_paper) for reader in sorted(news_paper.readers, key=lambda x: x.rank)],
+            readers=[await self.return_reader_info(reader, news_paper) for reader in readers],
+            page=self.pagination(page, per_page, count),
+            count=count,
         )
 
     async def reader(self):
@@ -323,14 +356,20 @@ class NewsPaperLogic(BaseLogic):
 
 
 
-    async def notify(self):
+    async def notify(self, page: int | None = None, per_page: int = 5):
         user, news_paper = await self.check_permission(self.news_paper_id, setting_parametr='editor_rank')
-        await news_paper.awaitable_attrs.readers
+        readers, count = await self.dao.reader.get_readers_by_paper_id_paginated(
+            news_paper.id,
+            page,
+            per_page,
+        )
         return AnswerNewsPaperInfoReaders(
             user=self.return_query_body(user),
             id=news_paper.id,
             name=news_paper.name,
-            readers=[await self.return_reader_info(reader, news_paper) for reader in news_paper.readers],
+            readers=[await self.return_reader_info(reader, news_paper) for reader in readers],
+            page=self.pagination(page, per_page, count),
+            count=count,
         )
 
     async def redact_rank(self, is_make: bool):

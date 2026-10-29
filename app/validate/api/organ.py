@@ -1,4 +1,4 @@
-from app.validate.api.base import datetime, Literal, BaseAPIValidate, Any, AnswerBody, AnswerBaseBody, QueryBody, MemberInfo, UserDB, ForButtons
+from app.validate.api.base import datetime, Literal, BaseAPIValidate, Any, AnswerBody, AnswerBaseBody, QueryBody, MemberInfo, UserDB, ForButtons, Page
 from app.validate.logic.setting import OrganSettingValidate
 
 class AnswerOrganInfoBase(AnswerBaseBody):
@@ -22,6 +22,8 @@ class AnswerOrganInfo(AnswerBody):
 
 class AnswerOrganInfoMembers(AnswerOrganInfoBase, AnswerBody):
     members: list[AnswerMemberInfo]
+    page: Page | None = None
+    count: int = 0
 
 class AnswerOrganInfoDescription(AnswerOrganInfoBase, AnswerBody):
     description: str | None = None
@@ -29,6 +31,8 @@ class AnswerOrganInfoDescription(AnswerOrganInfoBase, AnswerBody):
 class AnswerAllOrganInfo(AnswerBaseBody):
     search_value: str | None = None
     organs: list[OrganInfo]
+    page: Page | None = None
+    count: int = 0
 
 class AnswerRedactRank(AnswerBody):
     new_rank: int

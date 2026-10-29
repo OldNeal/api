@@ -42,15 +42,19 @@ async def user_search(
                    tg_id: int | None = Query(None, description='Telegram ID пользователя'),
                    username: str | None = Query(None, description='Telegram username'),
                    name: str | None = Query(None, description='Обычное имя пользователя'),
+                   page: int | None = Query(None, ge=0, description='Номер страницы'),
+                   per_page: int = Query(5, ge=1, description='Результатов на странице'),
                    session = Depends(get_session())
                    ):
-    return await MainService(session).search_users(user_id, tg_id, username, name)
+    return await MainService(session).search_users(user_id, tg_id, username, name, page, per_page)
 
 @main_router.get('/user/list', response_model=AnswerUsersBody)
 async def user_list(
+                   page: int | None = Query(None, ge=0, description='Номер страницы'),
+                   per_page: int = Query(5, ge=1, description='Результатов на странице'),
                    session = Depends(get_session())
                    ):
-    return await MainService(session).list_users()
+    return await MainService(session).list_users(page, per_page)
 
 @main_router.patch('/user/delete', response_model=AnswerUserBody)
 async def user_delete(

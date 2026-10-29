@@ -20,34 +20,34 @@ class PathService(BaseService):
     
 
 
-    async def search(self, value: str):
-        return await self.logic.search(value)
+    async def search(self, value: str, page: int | None = None, per_page: int = 5):
+        return await self.logic.search(value, page, per_page)
 
-    async def seq_search(self, value: str):
-        return await self.logic.seq_search(value)
+    async def seq_search(self, value: str, page: int | None = None, per_page: int = 5):
+        return await self.logic.seq_search(value, page, per_page)
 
-    async def ga_search(self, value: str):
-        return await self.logic.ga_search(value)
+    async def ga_search(self, value: str, page: int | None = None, per_page: int = 5):
+        return await self.logic.ga_search(value, page, per_page)
 
 
-    async def seqs(self):
-        return await self.logic.seqs()
+    async def seqs(self, page: int | None = None, per_page: int = 5):
+        return await self.logic.seqs(page, per_page)
     
-    async def paths(self):
-        return await self.logic.paths()
+    async def paths(self, page: int | None = None, per_page: int = 5):
+        return await self.logic.paths(page, per_page)
 
-    async def gas(self):
-        return await self.logic.gas()
+    async def gas(self, page: int | None = None, per_page: int = 5):
+        return await self.logic.gas(page, per_page)
 
-    async def groups(self):
-        return await self.logic.groups()
+    async def groups(self, page: int | None = None, per_page: int = 5):
+        return await self.logic.groups(page, per_page)
 
 
     async def seq_by_path_id(self, path_id: int, number: int):
         return await self.logic.seq_by_path_id(path_id, number)
 
-    async def seqs_by_path_id(self, path_id: int):
-        return await self.logic.seqs_by_path_id(path_id)
+    async def seqs_by_path_id(self, path_id: int, page: int | None = None, per_page: int = 5):
+        return await self.logic.seqs_by_path_id(path_id, page, per_page)
 
-    async def path_by_ga_id(self, ga_id: int):
-        return await self.logic.path_by_ga_id(ga_id)
+    async def path_by_ga_id(self, ga_id: int, page: int | None = None, per_page: int = 5):
+        return await self.logic.path_by_ga_id(ga_id, page, per_page)
