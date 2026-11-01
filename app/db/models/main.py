@@ -4,6 +4,7 @@ from app.db.base import Base
 from app.db.models.beyonder import BeyonderDB
 from app.db.models.organ import MemberDB
 from app.db.models.newspaper import ReaderDB
+from app.db.models.player import PlayerDB
 
 class TgUserDB(Base):
     tg_id: Mapped[int] = mapped_column(BigInteger, unique=True)
@@ -25,6 +26,7 @@ class UserDB(Base):
     tg_user: Mapped[TgUserDB | None] = relationship(TgUserDB, uselist=False, lazy='joined', primaryjoin="foreign(TgUserDB.tg_id) == UserDB.tg_id", cascade='all')
     beyonder: Mapped[BeyonderDB | None] = relationship('BeyonderDB', uselist=False, lazy='joined', back_populates='user', cascade='all, delete-orphan')
     member: Mapped[MemberDB | None] = relationship('MemberDB', uselist=False, lazy='joined', back_populates='user', cascade='all, delete-orphan')
+    player: Mapped[PlayerDB | None] = relationship('PlayerDB', uselist=False, lazy='joined', back_populates='user', cascade='all, delete-orphan')
     readers: Mapped[list['ReaderDB']] = relationship('ReaderDB', uselist=True, lazy='select', back_populates='user', cascade='all, delete-orphan')
 
     @property

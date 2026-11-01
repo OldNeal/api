@@ -78,6 +78,8 @@ class BeyonderLogic(BaseLogic):
   
     async def upseq(self, new_seq_number: int | None = None, path_name: str | None = None):
         user = await self.get_user(self.purpose_user_id, is_raise_not_beyonder=True)
+        if user.beyonder.ga_id:
+            raise SeqDontExistException('Вы уже ВД, дальше некуда')
         if new_seq_number:
             new_seq_number = new_seq_number
             self.check_permission()
@@ -154,6 +156,8 @@ class BeyonderLogic(BaseLogic):
         user = await self.get_user(is_raise_not_beyonder=True)
         if to_raise and user.beyonder.upseq_days > 0:
             raise UpseqNotComeException(upseq_days=user.beyonder.upseq_days)
+        if user.beyonder.ga_id:
+            raise SeqDontExistException('Вы уже ВД, дальше некуда')
         body = await self.query_body(user.id)
         return AnswerTimeInfo(
             user=body,

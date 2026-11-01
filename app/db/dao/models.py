@@ -3,6 +3,8 @@ from app.db.models.main import ChatDB, UserDB, TgChatDB, TgUserDB
 from app.db.models.beyonder import BeyonderDB, PathDB, SequenceDB, GreatAncientDB
 from app.db.models.organ import OrganDB, MemberDB
 from app.db.models.newspaper import NewsPaperDB, ReaderDB, EDITOR_RANK
+from app.db.models.player import PlayerDB
+from app.db.models.question import EruditeDB, QuestionDB, AnswerQuestionDB, ResultsQuestionDB
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select, update, delete, func, join, or_, all_, and_, any_
 from sqlalchemy.orm import selectinload, joinedload
@@ -606,6 +608,87 @@ class ReaderDAO(BaseDAO[ReaderDB]):
             query = query.options(*self.load)
         return await self.paginate(query, page, per_page)
 
+class PlayerDAO(BaseDAO[PlayerDB]):
+    model = PlayerDB
+
+class EruditeDAO(BaseDAO[EruditeDB]):
+    model = EruditeDB
+
+class QuestionDAO(BaseDAO[QuestionDB]):
+    model = QuestionDB
+    load = [selectinload(model.answers)]
+
+    def _questions_query(self):
+        query = select(self.model).order_by(self.model.id)
+        if self.load:
+            query = query.options(*self.load)
+        return query
+
+    async def search_paginated(self, value: str, page: int | None = None, per_page: int = 5):
+        search_value = value.strip().lower()
+        query = self._questions_query().where(
+            or_(
+                func.lower(self.model.body).contains(search_value, autoescape=True),
+                func.lower(func.coalesce(self.model.description, '')).contains(
+                    search_value,
+                    autoescape=True,
+                ),
+            )
+        )
+        return await self.paginate(query, page, per_page)
+
+    async def find_all_paginated(self, filters: dict | None = None, page: int | None = None, per_page: int = 5):
+        query = self._questions_query().filter_by(**(filters or {}))
+        return await self.paginate(query, page, per_page)
+
+    async def find_for_user_paginated(self, user_id: int, page: int | None = None, per_page: int = 5):
+        query = (
+            self._questions_query()
+            .join(EruditeDB, self.model.author_id == EruditeDB.id)
+            .join(PlayerDB, EruditeDB.player_id == PlayerDB.id)
+            .where(PlayerDB.user_id == user_id)
+        )
+        return await self.paginate(query, page, per_page)
+
+    async def find_random(self):
+        query = self._questions_query().order_by(None).order_by(func.random()).limit(1)
+        result = await self.session.execute(query)
+        return result.unique().scalars().first()
+
+    async def answer_statistics(self, question_id: int):
+        query = (
+            select(
+                AnswerQuestionDB.id,
+                AnswerQuestionDB.body,
+                AnswerQuestionDB.is_correct,
+                func.count(ResultsQuestionDB.id).label('count'),
+            )
+            .outerjoin(ResultsQuestionDB, ResultsQuestionDB.answer_id == AnswerQuestionDB.id)
+            .where(AnswerQuestionDB.question_id == question_id)
+            .group_by(AnswerQuestionDB.id, AnswerQuestionDB.body, AnswerQuestionDB.is_correct)
+            .order_by(AnswerQuestionDB.id)
+        )
+        result = await self.session.execute(query)
+        return list(result.all())
+
+class AnswerQuestionDAO(BaseDAO[AnswerQuestionDB]):
+    model = AnswerQuestionDB
+
+class ResultsQuestionDAO(BaseDAO[ResultsQuestionDB]):
+    model = ResultsQuestionDB
+
+    async def statistics_by_user(self, user_id: int):
+        query = (
+            select(AnswerQuestionDB.is_correct, func.count(self.model.id))
+            .join(EruditeDB, self.model.erudite_id == EruditeDB.id)
+            .join(PlayerDB, EruditeDB.player_id == PlayerDB.id)
+            .join(AnswerQuestionDB, self.model.answer_id == AnswerQuestionDB.id)
+            .where(PlayerDB.user_id == user_id)
+            .group_by(AnswerQuestionDB.is_correct)
+        )
+        result = await self.session.execute(query)
+        return dict(result.all())
+
 class DAO:
     def __init__(self, session: AsyncSession):
         if type(session) != AsyncSession:
@@ -623,6 +706,11 @@ class DAO:
         self.member = MemberDAO(self.session)
         self.news_paper = NewsPaperDAO(self.session)
         self.reader = ReaderDAO(self.session)
+        self.player = PlayerDAO(self.session)
+        self.erudite = EruditeDAO(self.session)
+        self.question = QuestionDAO(self.session)
+        self.answer_question = AnswerQuestionDAO(self.session)
+        self.results_question = ResultsQuestionDAO(self.session)
 
     async def flush(self):
         await self.session.flush()  
