@@ -6,8 +6,6 @@ logs/
 # C extensions
 *.so
 scripts.py
-alembic.ini
-alembic/
 .env*
 Dockerfile
 .dockerignore
