@@ -1,11 +1,13 @@
 from app.db.base import async_session_maker
 from app.db.dao.models import DAO, TgUserDB
+from app.logging.base import botlog
 
 async def check_user(tg_id: int, username: str | None, fullname: str | None, **kwargs):
         async with async_session_maker() as session:
             try:
                 dao = DAO(session)
                 user = await dao.user.query_by_tg_id(tg_id)
+                created = user is None
                 if user:
                     if username:
                         user.tg_user.username = username
@@ -15,6 +17,8 @@ async def check_user(tg_id: int, username: str | None, fullname: str | None, **k
                     user = await dao.user.add({'tg_id':tg_id})
                     user.tg_user = TgUserDB(tg_id=tg_id, username=username, fullname=fullname)
                 await session.commit()
+                if created:
+                    botlog.user_create(user.id, user.tg_id)
                 return user
             except Exception as e:
                 await session.rollback()

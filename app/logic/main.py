@@ -16,6 +16,7 @@ class MainLogic(BaseLogic):
         user = await self.dao.user.query_by_user_id(data.user_id)
         if user is None and data.telegram:
             user = await self.dao.user.query_by_tg_id(data.telegram.tg_id)
+        created = user is None
         if user is None:
             user = await self.dao.user.add({})
         if data.telegram:
@@ -31,6 +32,8 @@ class MainLogic(BaseLogic):
                 user.tg_id = data.telegram.tg_id
             await self.dao.flush()
         await links.cache_user(user.id, user.tg_id)
+        if created:
+            self.botlog.user_create(user.id, user.tg_id)
         return self.return_query_body(user)
     
     async def get_telegram(self, tg_id: int | None = None):
