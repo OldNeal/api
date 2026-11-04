@@ -33,7 +33,7 @@ class MainLogic(BaseLogic):
             await self.dao.flush()
         await links.cache_user(user.id, user.tg_id)
         if created:
-            self.botlog.logger.info('Создан пользователь', user_id=user.id, tg_id=user.tg_id)
+            self.botlog.user_create(user.id, user.tg_id)
         return self.return_query_body(user)
     
     async def get_telegram(self, tg_id: int | None = None):

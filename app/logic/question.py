@@ -63,7 +63,7 @@ class QuestionLogic(BaseLogic):
         ]
 
     async def create_question(self, data: QueryQuestionCreate):
-        user = await self.check_erudite(self.user_id)
+        user = await self.check_erudite(self.check_is_not_none(self.purpose_user_id, self.user_id))
         question = QuestionDB(
             body=data.question.body,
             description=data.question.description
@@ -79,7 +79,7 @@ class QuestionLogic(BaseLogic):
                 body=answer, 
                 is_correct=False) for answer in data.question.incorrect_answers])
         await self.dao.flush()
-        self.botlog.logger.info('Создан вопрос', question_id=question.id, user_id=user.id)
+        self.botlog.question_create(question.id, user.id)
         return AnswerQuestion(
             user=self.return_query_body(user),
             purpose=self.return_query_body(user),

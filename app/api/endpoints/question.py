@@ -22,7 +22,7 @@ async def question_create(
     query: QueryQuestionCreate,
     session=Depends(get_session()),
 ):
-    return await QuestionService(session, user_id=query.user_id, is_admin=query.is_admin).create_question(query)
+    return await QuestionService(session, user_id=query.user_id, purpose_user_id=query.purpose_user_id, is_admin=query.is_admin).create_question(query)
 
 
 @question_router.post('/answer', response_model=AnswerQuestionAnswer)

@@ -18,7 +18,7 @@ async def check_user(tg_id: int, username: str | None, fullname: str | None, **k
                     user.tg_user = TgUserDB(tg_id=tg_id, username=username, fullname=fullname)
                 await session.commit()
                 if created:
-                    botlog.logger.info('Создан пользователь', user_id=user.id, tg_id=user.tg_id)
+                    botlog.user_create(user.id, user.tg_id)
                 return user
             except Exception as e:
                 await session.rollback()

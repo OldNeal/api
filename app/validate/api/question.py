@@ -9,6 +9,7 @@ class QuestionCreate(QustionBase):
     incorrect_answers: list[str]
 
 class QueryQuestionCreate(QueryBody):
+    purpose_user_id: int | None = None
     question: QuestionCreate
 
 class QuestionAnswer(BaseAPIValidate):
