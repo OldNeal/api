@@ -78,8 +78,8 @@ async def main():
             log_level=settings.UVICORN_LOG_LEVEL,  
             access_log=settings.is_access_log
             ) 
-    except:
-        pass
+    except Exception as e:
+        botlog.logger.critical(str(e))
     finally:
         botlog.stop()
     
