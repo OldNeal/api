@@ -52,13 +52,8 @@ class QuestionLogic(BaseLogic):
         )
 
     async def questions_response(self, questions: list[QuestionDB]):
-        author_id = None
-        if self.user_id is not None:
-            user = await self.dao.user.query_by_user_id(self.user_id)
-            if user and user.player and user.player.erudite:
-                author_id = user.player.erudite.id
         return [
-            self.question_body(question, show_correct=question.author_id == author_id)
+            self.question_body(question, show_correct=True)
             for question in questions
         ]
 
