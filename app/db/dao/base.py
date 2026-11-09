@@ -183,6 +183,7 @@ class BaseDAO(Generic[T]):
         except SQLAlchemyError as e:
             raise          
 
+    @classmethod
     def update_obj(self, record, values: dict):
         try:
             for key, value in values.items():

@@ -23,12 +23,14 @@ class UserDB(Base):
     tg_id: Mapped[int | None] = mapped_column(BigInteger, unique=True, default=None)
     _name: Mapped[str | None] = mapped_column(name='name', default=None)
     is_ban: Mapped[bool] = mapped_column(default=False)
+    activity_points: Mapped[int | None] = mapped_column(default=0, nullable=True)
+
     tg_user: Mapped[TgUserDB | None] = relationship(TgUserDB, uselist=False, lazy='joined', primaryjoin="foreign(TgUserDB.tg_id) == UserDB.tg_id", cascade='all')
     beyonder: Mapped[BeyonderDB | None] = relationship('BeyonderDB', uselist=False, lazy='joined', back_populates='user', cascade='all, delete-orphan')
     member: Mapped[MemberDB | None] = relationship('MemberDB', uselist=False, lazy='joined', back_populates='user', cascade='all, delete-orphan')
     player: Mapped[PlayerDB | None] = relationship('PlayerDB', uselist=False, lazy='joined', back_populates='user', cascade='all, delete-orphan')
     readers: Mapped[list['ReaderDB']] = relationship('ReaderDB', uselist=True, lazy='select', back_populates='user', cascade='all, delete-orphan')
-
+ 
     @property
     def name(self):
         return self.tg_user.fullname if self._name is None and self.tg_user else self._name

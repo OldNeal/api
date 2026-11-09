@@ -11,24 +11,16 @@ from app.validate.api.beyonder import (AnswerTimeReplace,
                                        AnswerBeyonderInfo,
                                        AnswerBody,
                                        AnswerPathInfo,)
-
-upseq_time = {
-  9:'',
-  8:7,
-  7:14,
-  6:21,
-  5:30,
-  4:60,
-  3:90,
-  2:120,
-  1:150,
-  0:180,  
-  -1:180,
-}
+from app.logic.seq import sequences
 
 class BeyonderLogic(BaseLogic):
-    def get_upseq_time(sef, seq: int):
-        return datetime.now() + timedelta(days=upseq_time.get(seq-1)) if seq >= -1 else None
+    def get_upseq_time(sef, seq: int, paths: int | None = None):
+        if 10 > seq > 0:
+            return datetime.now() + timedelta(days=sequences.get(seq).days)
+        elif seq == 0 and not paths is None:
+            return datetime.now() + timedelta(days=sequences.get(seq).days*paths)
+        raise SeqDontExistException(seq=seq)
+
 
     def check_exist_seq(self, seq: int):
         if seq > 9 or seq < -1:
@@ -59,7 +51,7 @@ class BeyonderLogic(BaseLogic):
             'seq':path.sequences.get(seq), 
             'user_id':user.id, 
             'last_upseq':datetime.now(), 
-            'next_upseq':self.get_upseq_time(seq)
+            'next_upseq':self.get_upseq_time(seq) if seq > 0 else self.get_upseq_time(seq, await self.dao.path.neighbor_paths(path.ga_id))
             } 
         if seq == -1:
             new_bndr |= {
@@ -80,7 +72,7 @@ class BeyonderLogic(BaseLogic):
         user = await self.get_user(self.purpose_user_id, is_raise_not_beyonder=True)
         if user.beyonder.ga_id:
             raise SeqDontExistException('Вы уже ВД, дальше некуда')
-        if new_seq_number:
+        if new_seq_number is not None:
             new_seq_number = new_seq_number
             self.check_permission()
         else:
@@ -89,8 +81,9 @@ class BeyonderLogic(BaseLogic):
         await user.beyonder.awaitable_attrs.ga
         old_seq = user.beyonder.seq
         old_path = user.beyonder.seq.path
-        if user.beyonder.upseq_days > 0 and not self.is_admin:
-            raise UpseqNotComeException(upseq_days=user.beyonder.upseq_days)
+        remaining_time = user.beyonder.upseq_date
+        if remaining_time is not None and remaining_time.total_seconds() > 0 and not self.is_admin:
+            raise UpseqNotComeException(remaining_time=remaining_time)
         if path_name:
             path = await self.dao.path.query_by_name(path_name)
         else:
@@ -110,9 +103,9 @@ class BeyonderLogic(BaseLogic):
         else:
             new_seq = path.sequences.get(new_seq_number)
             user.beyonder.seq = new_seq
-        user.beyonder.next_upseq = self.get_upseq_time(user.beyonder.seq_number)
+        user.beyonder.next_upseq = self.get_upseq_time(new_seq_number) if new_seq_number > 0 else self.get_upseq_time(new_seq_number, await self.dao.path.neighbor_paths(path.ga_id))
         await self.dao.flush()
-        self.botlog.upseq(path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id, new_path_name=old_path.name, new_path_id=old_path.id, new_seq=old_seq.number, new_seq_id=old_seq.id)
+        self.botlog.upseq(old_path.name, old_path.id, old_seq.number, old_seq.id, path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id)
         return AnswerRedactSeq(
             user=await self.query_body(self.user_id),
             purpose=await self.query_body(user.id),
@@ -141,9 +134,9 @@ class BeyonderLogic(BaseLogic):
             new_seq = path.sequences.get(new_seq_number)
             user.beyonder.seq = new_seq
             user.beyonder.ga = None
-        user.beyonder.next_upseq = self.get_upseq_time(user.beyonder.seq_number)
+        user.beyonder.next_upseq = self.get_upseq_time(user.beyonder.seq_number) if user.beyonder.seq_number > 0 else self.get_upseq_time(user.beyonder.seq_number, await self.dao.path.neighbor_paths(path.ga_id))
         await self.dao.flush()
-        self.botlog.downseq(path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id, new_path_name=old_path.name, new_path_id=old_path.id, new_seq=old_seq.number, new_seq_id=old_seq.id)
+        self.botlog.downseq(old_path.name, old_path.id, old_seq.number, old_seq.id, path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id)
         return AnswerRedactSeq(
             user=await self.query_body(self.user_id),
             purpose=await self.query_body(user.id),
@@ -154,8 +147,10 @@ class BeyonderLogic(BaseLogic):
 
     async def time_info(self, to_raise: bool = False):
         user = await self.get_user(is_raise_not_beyonder=True)
-        if to_raise and user.beyonder.upseq_days > 0:
-            raise UpseqNotComeException(upseq_days=user.beyonder.upseq_days)
+        remaining_time = user.beyonder.upseq_date
+        print(remaining_time)
+        if to_raise and remaining_time is not None and remaining_time.total_seconds() > 0:
+            raise UpseqNotComeException(remaining_time=remaining_time)
         if user.beyonder.ga_id:
             raise SeqDontExistException('Вы уже ВД, дальше некуда')
         body = await self.query_body(user.id)
@@ -164,7 +159,7 @@ class BeyonderLogic(BaseLogic):
             purpose=body,
             next_upseq=user.beyonder.next_upseq,
             last_upseq=user.beyonder.last_upseq,
-            upseq_days=user.beyonder.upseq_days,
+            total_seconds=remaining_time.total_seconds() if not remaining_time is None else None,
         ).to_query(user)
     
     async def replace_time(self, new_time: datetime):

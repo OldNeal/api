@@ -311,6 +311,14 @@ class PathDAO(BaseDAO[PathDB]):
             query = query.options(*self.load)
         return await self.paginate(query, page, per_page)
 
+    async def neighbor_paths(self, ga_id: int):
+        try:
+            query = select(func.count()).select_from(self.model).filter_by(ga_id=ga_id)
+            result = await self.session.scalar(query)
+            return result or 0
+        except SQLAlchemyError as e:
+            raise
+
 class SequenceDAO(BaseDAO[SequenceDB]):
     model = SequenceDB
 
@@ -723,3 +731,7 @@ class DAO:
         
     async def rollback(self):
         await self.session.rollback()  
+
+    @classmethod
+    def update_object(self, record, values: dict):
+        return BaseDAO.update_obj(record, values)

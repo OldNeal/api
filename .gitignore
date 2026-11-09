@@ -1,3 +1,11 @@
+# my ignore list
+
+scripts/
+.env*
+bd_data/
+Dockerfile
+.dockerignore
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -5,10 +13,6 @@ __pycache__/
 logs/
 # C extensions
 *.so
-scripts.py
-.env*
-Dockerfile
-.dockerignore
 # Distribution / packaging
 .Python
 build/

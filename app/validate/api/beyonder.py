@@ -43,7 +43,7 @@ class AnswerBeyonderInfo(AnswerBody):
 class AnswerTimeInfo(AnswerBeyonderInfo):
     next_upseq: datetime | None
     last_upseq: datetime
-    upseq_days: int | None
+    total_seconds: float | None
 
 class AnswerBeyonderList(AnswerBaseBody):
     path: AnswerPathInfo
