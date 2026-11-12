@@ -1,16 +1,13 @@
 from app.logic.base import BaseLogic
 from app.validate.api.base import AnswerBaseInfo, QueryUserUpdate, AnswerUsersBody
 from app.db.models.main import TgUserDB, UserDB
-from app.redis.links import links
 from app.exception.base import ParametrValidationException, UserDontFind
 
 class MainLogic(BaseLogic):
-    links = links
-
     async def info(self):
         user =  await self.get_user()
         body = self.return_query_body(user)
-        return AnswerBaseInfo(user=body, purpose=body).to_query(user)
+        return AnswerBaseInfo(user=body, purpose=body, activity_points=user.activity_points).to_query(user)
 
     async def update(self, data: QueryUserUpdate):
         user = await self.dao.user.query_by_user_id(data.user_id)
@@ -31,7 +28,7 @@ class MainLogic(BaseLogic):
                 )
                 user.tg_id = data.telegram.tg_id
             await self.dao.flush()
-        await links.cache_user(user.id, user.tg_id)
+        await self.store.user.cache_user(user.id, user.tg_id)
         if created:
             self.botlog.user_create(user.id, user.tg_id)
         return self.return_query_body(user)
@@ -45,7 +42,7 @@ class MainLogic(BaseLogic):
             raise ParametrValidationException('Вы не указали айди пользователя')
         if user is None:
             raise UserDontFind()
-        await links.cache_user(user.id, user.tg_id)
+        await self.store.user.cache_user(user.id, user.tg_id)
         return self.return_query_body(user)
 
     async def search_users(
@@ -101,5 +98,5 @@ class MainLogic(BaseLogic):
 
         response = self.return_query_body(user)
         await self.dao.user.delete_one_by_id(user_id)
-        await links.delete_user(user.id, user.tg_id)
+        await self.store.user.delete_user(user.id, user.tg_id)
         return response

@@ -31,6 +31,8 @@ class Settings:
     REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
     REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
 
+    VALUES = {}
+
     def get_db_url(self):
         return (f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@"
                 f"{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}")
@@ -58,6 +60,10 @@ class Settings:
     @property
     def openapi_url(self):
         return '/openapi.json' if self.DOCS == 't' else None
+
+    @property
+    def activity_points_factor(self) -> int:
+        return self.VALUES.get('activity_points_factor', 1)
 
 
 settings = Settings()

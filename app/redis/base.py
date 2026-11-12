@@ -1,12 +1,12 @@
 from config import settings
 from contextlib import asynccontextmanager
-import redis.asyncio as redis
+from redis.asyncio import Redis
 from dark_swag import FastAPI
 from datetime import datetime
 from app.logging.base import botlog
 from app.exception.base import RedisError
 
-redis_client = redis.Redis(
+redis_client = Redis(
     host=settings.REDIS_HOST,
     port=settings.REDIS_PORT,
     password=settings.REDIS_PASSWORD,
@@ -31,3 +31,16 @@ async def redis_ping(logged: bool = False):
 async def lifespan(app: FastAPI):
     yield
     await redis_client.aclose()
+
+class BaseHashs:
+    pass
+
+class BaseStore:
+    hashs_cls = BaseHashs
+    hashs: type[BaseHashs]
+
+    def __init__(self, client: Redis, **kwargs):
+        self.client = client
+        self.kwargs = kwargs
+
+        self.hashs = self.hashs_cls

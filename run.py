@@ -4,8 +4,8 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from app.exception.base import BaseException
 from config import settings, use_route_names_as_operation_ids
-from app.redis.base import lifespan, redis_ping
-from app.redis.links import links, LinkHashs
+from app.redis.base import lifespan
+from app.redis.store import Store
 import uvicorn, asyncio
 from app.api.endpoints.main import base_router
 from app.api.midlwares import LogMidlware
@@ -66,9 +66,7 @@ async def main():
     try:
         botlog.logger.info('API запускается')
         await ping_db(True)
-        await redis_ping(True)
-        await links.cache_all()
-        await links.hscan_all(LinkHashs.TG_HASH)
+        await Store.start()
         botlog.start()
         uvicorn.run(
             settings.APP, 

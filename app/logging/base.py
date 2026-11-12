@@ -201,6 +201,10 @@ class BotLog:
     def create_levels_user(self):
         return [
             self.logger.level("USER CREATE", no=51, color="<green>", icon="👤"),
+            self.logger.level("GET ACTIVITY POINTS", no=52, color="<green>", icon="🪙"),
+            self.logger.level("ACTIVITY POINTS ADD", no=53, color="<green>", icon="➕"),
+            self.logger.level("ACTIVITY POINTS DEDUCT", no=54, color="<green>", icon="➖"),
+            self.logger.level("ACTIVITY POINTS RESET", no=55, color="<green>", icon="♻️"),
         ]
 
     def create_levels_question(self):
@@ -262,6 +266,49 @@ class BotLog:
             'USER CREATE',
             'Создан пользователь',
             **kwargs | {'user_id': user_id, 'tg_id': tg_id},
+        )
+
+    def get_activity_points(self, points: int, all_points: int, **kwargs):
+        self.logger.log(
+            'GET ACTIVITY POINTS',
+            f'Получены очки активости: {points}',
+            **kwargs | {'points': points, 'all_points': all_points},
+        )
+
+    def activity_points_add(self, admin_id: int, user_id: int, points: int, reason: str | None = None):
+        self.logger.log(
+            'ACTIVITY POINTS ADD',
+            'Администратор начислил очки активности',
+            admin_id=admin_id,
+            user_id=user_id,
+            points=points,
+            reason=reason,
+        )
+
+    def activity_points_deduct(self, admin_id: int, user_id: int, points: int, reason: str | None = None):
+        self.logger.log(
+            'ACTIVITY POINTS DEDUCT',
+            'Администратор снял очки активности',
+            admin_id=admin_id,
+            user_id=user_id,
+            points=points,
+            reason=reason,
+        )
+
+    def activity_points_reset(
+        self,
+        admin_id: int,
+        user_id: int,
+        removed_points: int,
+        reason: str | None = None,
+    ):
+        self.logger.log(
+            'ACTIVITY POINTS RESET',
+            'Администратор обнулил баланс очков активности',
+            admin_id=admin_id,
+            user_id=user_id,
+            removed_points=removed_points,
+            reason=reason,
         )
 
     def question_create(self, question_id: int, user_id: int, **kwargs):
@@ -421,3 +468,8 @@ class BotLog:
         
 botlog = BotLog()
 log = botlog.logger
+
+class BotLogger(BotLog):
+    def __init__(self, logger = loguru.logger):
+        self.loguru = loguru
+        self.logger = logger

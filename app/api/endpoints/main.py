@@ -3,6 +3,7 @@ from app.validate.api.base import QueryBody, AnswerBaseInfo, QueryUserUpdate, An
 from app.api.endpoints.beyonder import beyonder_router
 from app.api.endpoints.wiki import wiki_router
 from app.api.endpoints.stats import stats_router
+from app.api.endpoints.activity import activity_router
 from app.api.endpoints.organ import organ_router
 from app.api.endpoints.newspaper import news_paper_router
 from app.api.endpoints.logs import logs_router
@@ -70,6 +71,7 @@ async def user_delete(
     ).delete_user(user_id)
 
 base_router.include_router(main_router)
+base_router.include_router(activity_router)
 base_router.include_router(beyonder_router)
 base_router.include_router(organ_router)
 base_router.include_router(player_router)

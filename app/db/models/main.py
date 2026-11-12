@@ -23,7 +23,8 @@ class UserDB(Base):
     tg_id: Mapped[int | None] = mapped_column(BigInteger, unique=True, default=None)
     _name: Mapped[str | None] = mapped_column(name='name', default=None)
     is_ban: Mapped[bool] = mapped_column(default=False)
-    activity_points: Mapped[int | None] = mapped_column(default=0, nullable=True)
+    _activity_points: Mapped[int | None] = mapped_column(name='activity_points', default=0, nullable=True)
+    _all_activity_points: Mapped[int | None] = mapped_column(name='all_activity_points', default=0, nullable=True)
 
     tg_user: Mapped[TgUserDB | None] = relationship(TgUserDB, uselist=False, lazy='joined', primaryjoin="foreign(TgUserDB.tg_id) == UserDB.tg_id", cascade='all')
     beyonder: Mapped[BeyonderDB | None] = relationship('BeyonderDB', uselist=False, lazy='joined', back_populates='user', cascade='all, delete-orphan')
@@ -46,6 +47,22 @@ class UserDB(Base):
     @property
     def readers_by_news_paper_id(self):
         return {reader.news_paper_id:reader for reader in self.readers}
+
+    @property
+    def activity_points(self):
+        return self._activity_points or 0
+
+    @property
+    def all_activity_points(self):
+        return self._all_activity_points or 0
+
+    @activity_points.setter
+    def activity_points(self, points: int):
+        self._activity_points = points
+    
+    @all_activity_points.setter
+    def all_activity_points(self, points: int):
+        self._all_activity_points = points
 
 class ChatDB(Base):
     tg_id: Mapped[int | None] = mapped_column(BigInteger, unique=True, default=None)

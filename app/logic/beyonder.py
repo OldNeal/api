@@ -148,7 +148,6 @@ class BeyonderLogic(BaseLogic):
     async def time_info(self, to_raise: bool = False):
         user = await self.get_user(is_raise_not_beyonder=True)
         remaining_time = user.beyonder.upseq_date
-        print(remaining_time)
         if to_raise and remaining_time is not None and remaining_time.total_seconds() > 0:
             raise UpseqNotComeException(remaining_time=remaining_time)
         if user.beyonder.ga_id:

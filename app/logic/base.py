@@ -6,6 +6,7 @@ from app.logging.base import botlog
 from app.validate.api.base import Page
 from app.exception.base import PageDontFindError
 import math
+from app.redis.store import Store, redis_client
 
 class BaseLogic:
     def __init__(self, session, user_id: int | None = None, purpose_user_id: int | None = None, is_admin: bool = False):
@@ -15,6 +16,8 @@ class BaseLogic:
         self.is_admin = is_admin
         self.botlog = botlog.bind(purpose_user_id=purpose_user_id)
         self.log_kwargs = {}
+
+        self.store = Store(redis_client)
     
     def check_is_not_none(self, *objs):
         for obj in objs:
