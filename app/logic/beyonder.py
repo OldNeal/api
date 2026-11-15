@@ -14,12 +14,14 @@ from app.validate.api.beyonder import (AnswerTimeReplace,
 from app.logic.seq import sequences
 
 class BeyonderLogic(BaseLogic):
-    def get_upseq_time(sef, seq: int, paths: int | None = None):
+    def get_upseq_time(sef, seq: int, paths: int | None = None, study_method_action: float = 0.0):
         if 10 > seq > 0:
-            return datetime.now() + timedelta(days=sequences.get(seq).days)
+            upseq_time = timedelta(days=sequences.get(seq).days)
         elif seq == 0 and not paths is None:
-            return datetime.now() + timedelta(days=sequences.get(seq).days*paths)
-        raise SeqDontExistException(seq=seq)
+            upseq_time = timedelta(days=sequences.get(seq).days*paths)
+        else:
+            raise SeqDontExistException(seq=seq)
+        return datetime.now() + upseq_time*(1 - study_method_action)
 
 
     def check_exist_seq(self, seq: int):
@@ -104,6 +106,7 @@ class BeyonderLogic(BaseLogic):
             new_seq = path.sequences.get(new_seq_number)
             user.beyonder.seq = new_seq
         user.beyonder.next_upseq = self.get_upseq_time(new_seq_number) if new_seq_number > 0 else self.get_upseq_time(new_seq_number, await self.dao.path.neighbor_paths(path.ga_id))
+        user.beyonder.study_points = 0
         await self.dao.flush()
         self.botlog.upseq(old_path.name, old_path.id, old_seq.number, old_seq.id, path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id)
         return AnswerRedactSeq(
@@ -135,6 +138,7 @@ class BeyonderLogic(BaseLogic):
             user.beyonder.seq = new_seq
             user.beyonder.ga = None
         user.beyonder.next_upseq = self.get_upseq_time(user.beyonder.seq_number) if user.beyonder.seq_number > 0 else self.get_upseq_time(user.beyonder.seq_number, await self.dao.path.neighbor_paths(path.ga_id))
+        user.beyonder.study_points = 0
         await self.dao.flush()
         self.botlog.downseq(old_path.name, old_path.id, old_seq.number, old_seq.id, path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id)
         return AnswerRedactSeq(

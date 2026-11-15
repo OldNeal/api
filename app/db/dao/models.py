@@ -5,6 +5,7 @@ from app.db.models.organ import OrganDB, MemberDB
 from app.db.models.newspaper import NewsPaperDB, ReaderDB, EDITOR_RANK
 from app.db.models.player import PlayerDB
 from app.db.models.question import EruditeDB, QuestionDB, AnswerQuestionDB, ResultsQuestionDB
+from app.db.models.item import InventoryDB, ItemDB, ItemSketchDB
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select, update, delete, func, join, or_, all_, and_, any_
 from sqlalchemy.orm import selectinload, joinedload
@@ -697,6 +698,59 @@ class ResultsQuestionDAO(BaseDAO[ResultsQuestionDB]):
         result = await self.session.execute(query)
         return dict(result.all())
 
+
+class ItemSketchDAO(BaseDAO[ItemSketchDB]):
+    model = ItemSketchDB
+
+    async def query_by_tag(self, tag: str):
+        return await self.find_one_or_none({'tag': tag})
+
+
+class InventoryDAO(BaseDAO[InventoryDB]):
+    model = InventoryDB
+
+    async def query_by_user_id(self, user_id: int):
+        return await self.find_one_or_none({'user_id': user_id})
+
+
+class ItemDAO(BaseDAO[ItemDB]):
+    model = ItemDB
+    load = [joinedload(model.sketch)]
+
+    async def query_by_inventory_and_sketch(self, inventory_id: int, sketch_id: int):
+        return await self.find_one_or_none({
+            'inventory_id': inventory_id,
+            'sketch_id': sketch_id,
+        })
+
+    async def query_by_user_id_and_tag(self, user_id: int, tag: str):
+        query = (
+            select(self.model)
+            .join(InventoryDB, self.model.inventory_id == InventoryDB.id)
+            .join(ItemSketchDB, self.model.sketch_id == ItemSketchDB.id)
+            .where(InventoryDB.user_id == user_id, ItemSketchDB.tag == tag)
+        )
+        if self.load:
+            query = query.options(*self.load)
+        result = await self.session.execute(query)
+        return result.unique().scalar_one_or_none()
+
+    async def query_inventory_paginated(
+        self,
+        inventory_id: int,
+        page: int | None = None,
+        per_page: int = 5,
+    ):
+        query = (
+            select(self.model)
+            .where(self.model.inventory_id == inventory_id)
+            .order_by(self.model.id)
+        )
+        if self.load:
+            query = query.options(*self.load)
+        return await self.paginate(query, page, per_page)
+
+
 class DAO:
     def __init__(self, session: AsyncSession):
         if type(session) != AsyncSession:
@@ -719,6 +773,9 @@ class DAO:
         self.question = QuestionDAO(self.session)
         self.answer_question = AnswerQuestionDAO(self.session)
         self.results_question = ResultsQuestionDAO(self.session)
+        self.item_sketch = ItemSketchDAO(self.session)
+        self.inventory = InventoryDAO(self.session)
+        self.item = ItemDAO(self.session)
 
     async def flush(self):
         await self.session.flush()  

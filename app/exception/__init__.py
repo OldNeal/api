@@ -2,6 +2,7 @@ from .base import PermissionException, BaseException, BaseExceptionResponse, Use
 from .beyonder import PathDontEnterException, SeqBusyException, UpseqNotComeException, DontBeyonderException, ALreadyBeyonderException, SeqDontExistException
 from .wiki import PathDontSearchException, PathDontEnterFilterException
 from .question import QuestionDontFindException, AnswerDontFindException
+from .item import ItemDontFindException, ItemQuantityException
 from .organ import DontMemberError, ALreadyOwnerError, DontEnterPurposeError, ExistRankError, ExistOrganError, InOneOrganError, ALreadyMemberError, OrganPermissioError, OrganPermissionNewRankError, OrganPermissionPurposeRankError, ClosenOrganError, HiddenOrganError
 from .logs import DontLogFileException, DontHavePermissionException, DontExistCategoryException
 from .newspaper import ExistNewsPaperError, ReaderError, NewsPaperPermissioError
@@ -43,7 +44,9 @@ exceptions: list[type[BaseException]] = [
     ReaderError,
     NewsPaperPermissioError,
     QuestionDontFindException,
-    AnswerDontFindException
+    AnswerDontFindException,
+    ItemDontFindException,
+    ItemQuantityException,
 ]
 
 exception_codes = {e.status_code:e for e in exceptions}

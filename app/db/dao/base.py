@@ -8,6 +8,7 @@ from datetime import datetime, date
 
 T = TypeVar("T", bound=Base)
 O = TypeVar("O", bound=Base)
+OBJ = TypeVar("OBJ", bound=Base)
 
 class BaseDAO(Generic[T]):
     model: type[T] = Base# Устанавливается в дочернем классе
@@ -184,7 +185,7 @@ class BaseDAO(Generic[T]):
             raise          
 
     @classmethod
-    def update_obj(self, record, values: dict):
+    def update_obj(self, record: OBJ, values: dict) -> OBJ:
         try:
             for key, value in values.items():
                 try:

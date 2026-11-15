@@ -23,7 +23,6 @@ async def redis_ping(logged: bool = False):
                     if logged:
                         botlog.logger.info('Redis работает', ping=result)
                     return result
-                raise RedisError()
             except Exception as e:
                 raise RedisError(error=str(e))
 

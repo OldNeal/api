@@ -1,13 +1,13 @@
 from app.logic.base import BaseLogic
 from app.validate.api.base import AnswerBaseInfo, QueryUserUpdate, AnswerUsersBody
-from app.db.models.main import TgUserDB, UserDB
+from app.db.models.main import TgUserDB
 from app.exception.base import ParametrValidationException, UserDontFind
 
 class MainLogic(BaseLogic):
     async def info(self):
         user =  await self.get_user()
         body = self.return_query_body(user)
-        return AnswerBaseInfo(user=body, purpose=body, activity_points=user.activity_points).to_query(user)
+        return AnswerBaseInfo(user=body, purpose=body).to_query(user)
 
     async def update(self, data: QueryUserUpdate):
         user = await self.dao.user.query_by_user_id(data.user_id)

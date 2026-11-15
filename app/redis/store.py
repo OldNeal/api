@@ -4,7 +4,7 @@ from app.redis.user import UserStore
 from app.redis.activity import ActivityStore
 
 class Store:
-    def __init__(self, client: Redis, **kwargs):
+    def __init__(self, client: Redis = redis_client, **kwargs):
         self.client = client
         self.kwargs = kwargs
 
@@ -13,5 +13,12 @@ class Store:
 
     @classmethod
     async def start(self):
-        await redis_ping(True)
+        await self.ping()
         return await UserStore(redis_client).start()
+
+    @classmethod
+    async def ping(self):
+        return await redis_ping(True)
+
+    async def close(self):
+        return await self.client.aclose()

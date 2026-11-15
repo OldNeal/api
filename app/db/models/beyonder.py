@@ -1,6 +1,6 @@
 from sqlalchemy import ForeignKey, Integer, ARRAY, BigInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-import uuid
+from decimal import Decimal, ROUND_HALF_DOWN
 from app.db.base import Base
 from datetime import datetime
 from app.logic.seq import sequences
@@ -8,7 +8,7 @@ from app.logic.seq import sequences
 class SequenceDB(Base):
     name: Mapped[str]
     number: Mapped[int]
-    hash: Mapped[str | None] = mapped_column(default=uuid.uuid4().hex, nullable=True)
+    hash: Mapped[str | None] = mapped_column(unique=True, nullable=True)
     path_id: Mapped[int | None] = mapped_column(ForeignKey('PathDB.id'))    
     path: Mapped['PathDB'] = relationship('PathDB', uselist=False, lazy='joined', back_populates='sequence_datas', cascade='all')
     _rsp_factor: Mapped[int | None] = mapped_column(name='rsp_factor', default=1, nullable=True)
@@ -19,14 +19,18 @@ class SequenceDB(Base):
 
     @property
     def all_rsp_factor(self):
-        return sequences.get(self.number).rsp_factor*self.rsp_factor*self.path.rsp_factor
+        return self.rsp_factor*self.path.rsp_factor
 
     @property
     def in_dict(self):
         return ['_rsp_factor']
 
+    @property
+    def rsp(self):
+        return sequences.get(self.number).rsp*self.all_rsp_factor
+
 class PathDB(Base):
-    hash: Mapped[str | None] = mapped_column(default=uuid.uuid4().hex, nullable=True)
+    hash: Mapped[str | None] = mapped_column(unique=True, nullable=True)
     ga_id: Mapped[int] = mapped_column(ForeignKey('GreatAncientDB.id'))
     ga: Mapped['GreatAncientDB'] = relationship('GreatAncientDB', uselist=False, lazy='joined', back_populates='paths', cascade='all')
     sequence_datas: Mapped[list['SequenceDB']] = relationship('SequenceDB', uselist=True, lazy='select', back_populates='path', cascade='all')
@@ -61,7 +65,7 @@ class PathDB(Base):
 class GreatAncientDB(Base):
     name: Mapped[str]
     group: Mapped[str]
-    hash: Mapped[str | None] = mapped_column(default=uuid.uuid4().hex, nullable=True)
+    hash: Mapped[str | None] = mapped_column(unique=True, nullable=True)
     paths: Mapped[list['PathDB']] = relationship('PathDB', uselist=True, lazy='select', back_populates='ga', cascade='all')
     emodzi: Mapped[str | None] = mapped_column(default=None)
     custom_emodzi_id: Mapped[str | None] = mapped_column(default=None)
@@ -109,7 +113,13 @@ class BeyonderDB(Base):
     @property
     def study_points(self):
         return self._study_points if self._study_points else 0
+
+    @study_points.setter
+    def study_points(self, points: int):
+        self._study_points = points
+        return self._study_points 
  
-    @property
-    def is_study_method_action(self):
-        return self.study_points >= self.seq.all_rsp_factor
+    def study_method_action(self, paths: int | None = None):
+        if self.seq_number > -1 or paths is None:
+            return (Decimal(10) / Decimal(self.seq.rsp)).quantize(Decimal('0.0001'), ROUND_HALF_DOWN)
+        return (Decimal(10) / Decimal(self.seq.rsp*paths)).quantize(Decimal('0.0001'), ROUND_HALF_DOWN)

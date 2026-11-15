@@ -21,14 +21,5 @@ class ActivityService(BaseService):
     async def get_activity_points(self, message_count: int = 1):
         return await self.logic.get_activity_points(message_count)
 
-    async def add_activity_points(self, purpose_user_id: int, points: int, reason: str | None = None):
-        return await self.logic.add_activity_points(purpose_user_id, points, reason)
-
-    async def deduct_activity_points(self, purpose_user_id: int, points: int, reason: str | None = None):
-        return await self.logic.deduct_activity_points(purpose_user_id, points, reason)
-
-    async def reset_activity_points(self, purpose_user_id: int, reason: str | None = None):
-        return await self.logic.reset_activity_points(purpose_user_id, reason)
-
     async def reset_activity_points_limit(self, purpose_user_id: int):
         return await self.logic.reset_activity_points_limit(purpose_user_id)

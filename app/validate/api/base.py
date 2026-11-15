@@ -60,7 +60,6 @@ class ReaderInfo(AnswerBaseBody):
 class AnswerBaseInfo(AnswerBody):
     beyonder: BeyonderInfo | None = None
     member: MemberInfo | None = None
-    activity_points: int = 0
 
     def to_query(self, data: UserDB, beyonder: bool = True, member: bool = True):
         if data:
@@ -115,18 +114,9 @@ class AnswerUsersBody(AnswerBaseBody):
 
 class ActivityPoints(AnswerBody):
     activity_points: int = 0
-    all_activity_points: int = 0
     
 class AnswerActivityPoints(ActivityPoints):
     get_activity_points: int = 0
-
-class AnswerActivityPointsAdd(ActivityPoints):
-    old_activity_points: int = 0
-    added_activity_points: int = 0
-
-class AnswerActivityPointsDeduct(ActivityPoints):
-    old_activity_points: int = 0
-    deducted_activity_points: int = 0
 
 class AnswerActivityPointsLimitReset(ActivityPoints):
     pass
