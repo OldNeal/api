@@ -18,7 +18,7 @@ class UpseqNotComeException(BeyonderException):
     status_code = 455
 
     def __init__(self, remaining_time: timedelta, **kwargs):
-        if remaining_time.days > 1:
+        if remaining_time.days >= 1:
             message = f'Зелье еще не переварилось, осталось дней: {remaining_time.days}'
         else:
             total_seconds = max(0, ceil(remaining_time.total_seconds()))
@@ -50,6 +50,11 @@ class SeqBusyException(BeyonderException):
     default_message = 'Последовательность уже занята'
     status_code = 471
 
+class HaveActivityPointsError(BaseException):
+    default_message = 'У вас не хватает очков активности'
+    status_code = 437
 
-
+class MethodActionFullStudyError(BaseException):
+    default_message = 'Требуемое количество очков активности для полного изучения метода действия: {study_points}'
+    status_code = 439
     

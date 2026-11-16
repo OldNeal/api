@@ -1,6 +1,6 @@
 from app.logic.base import BaseLogic
 from datetime import datetime, timedelta
-from app.exception.beyonder import SeqDontExistException, UpseqNotComeException, ALreadyBeyonderException, PathDontEnterException, SeqBusyException
+from app.exception.beyonder import SeqDontExistException, UpseqNotComeException, ALreadyBeyonderException, PathDontEnterException, SeqBusyException, HaveActivityPointsError, MethodActionFullStudyError
 from app.exception.wiki import PathDontSearchException
 from app.validate.api.beyonder import (AnswerTimeReplace, 
                                        AnswerTimeRedact, 
@@ -10,18 +10,28 @@ from app.validate.api.beyonder import (AnswerTimeReplace,
                                        AnswerBeyonderList,
                                        AnswerBeyonderInfo,
                                        AnswerBody,
-                                       AnswerPathInfo,)
+                                       AnswerPathInfo,
+                                       AnswerStudyMethodAction,
+                                       TimeRedact,
+                                       Point,
+                                       Points)
 from app.logic.seq import sequences
+from app.logic.item import ACTIVITY_POINTS_TAG
+from app.db.models.item import InventoryDB
 
 class BeyonderLogic(BaseLogic):
-    def get_upseq_time(sef, seq: int, paths: int | None = None, study_method_action: float = 0.0):
+    async def get_upseq_time(self, seq: int, ga_id: int, study_method_action: float = 0.0):
+        paths = await self.dao.path.neighbor_paths(ga_id) if seq == 0 else None
+        return self._get_upseq_time(seq, paths, study_method_action)
+
+    def _get_upseq_time(self, seq: int, paths: int | None = None, study_method_action: float = 0.0):
         if 10 > seq > 0:
             upseq_time = timedelta(days=sequences.get(seq).days)
-        elif seq == 0 and not paths is None:
+        elif seq == 0 and paths is not None:
             upseq_time = timedelta(days=sequences.get(seq).days*paths)
         else:
             raise SeqDontExistException(seq=seq)
-        return datetime.now() + upseq_time*(1 - study_method_action)
+        return datetime.now() + upseq_time*(1 - float(study_method_action)/2)
 
 
     def check_exist_seq(self, seq: int):
@@ -32,7 +42,26 @@ class BeyonderLogic(BaseLogic):
     async def info(self):
         beyonder = await self.get_user()
         user = self.return_query_body(beyonder)
-        return AnswerBeyonderInfo(user=user, purpose=user).to_query(beyonder)
+        answer = AnswerBeyonderInfo(user=user, purpose=user).to_query(beyonder)
+        if beyonder.beyonder is not None:
+            activity_points = 0
+            if beyonder.inventory is not None:
+                await beyonder.inventory.awaitable_attrs.items
+                item = beyonder.inventory.items_by_sketch_tag.get(ACTIVITY_POINTS_TAG)
+                if item is not None:
+                    activity_points = item.quantity
+            paths = (
+                await self.dao.path.neighbor_paths(beyonder.beyonder.seq.path.ga_id)
+                if beyonder.beyonder.seq_number == 0
+                else None
+            )
+            answer.points = Points(
+                study_method_action=beyonder.beyonder.study_method_action(paths),
+                study_points=Point(new=beyonder.beyonder.study_points),
+                activity_points=Point(new=activity_points),
+                rsp=beyonder.beyonder.rsp(paths),
+            )
+        return answer
 
     async def drink(self, path_name: str | None = None, path_id: int | None = None, seq: int = 9):
         if seq < 9:
@@ -53,7 +82,7 @@ class BeyonderLogic(BaseLogic):
             'seq':path.sequences.get(seq), 
             'user_id':user.id, 
             'last_upseq':datetime.now(), 
-            'next_upseq':self.get_upseq_time(seq) if seq > 0 else self.get_upseq_time(seq, await self.dao.path.neighbor_paths(path.ga_id))
+            'next_upseq':await self.get_upseq_time(seq, path.ga_id)
             } 
         if seq == -1:
             new_bndr |= {
@@ -105,7 +134,7 @@ class BeyonderLogic(BaseLogic):
         else:
             new_seq = path.sequences.get(new_seq_number)
             user.beyonder.seq = new_seq
-        user.beyonder.next_upseq = self.get_upseq_time(new_seq_number) if new_seq_number > 0 else self.get_upseq_time(new_seq_number, await self.dao.path.neighbor_paths(path.ga_id))
+        user.beyonder.next_upseq = await self.get_upseq_time(new_seq_number, path.ga_id)
         user.beyonder.study_points = 0
         await self.dao.flush()
         self.botlog.upseq(old_path.name, old_path.id, old_seq.number, old_seq.id, path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id)
@@ -137,7 +166,7 @@ class BeyonderLogic(BaseLogic):
             new_seq = path.sequences.get(new_seq_number)
             user.beyonder.seq = new_seq
             user.beyonder.ga = None
-        user.beyonder.next_upseq = self.get_upseq_time(user.beyonder.seq_number) if user.beyonder.seq_number > 0 else self.get_upseq_time(user.beyonder.seq_number, await self.dao.path.neighbor_paths(path.ga_id))
+        user.beyonder.next_upseq = await self.get_upseq_time(user.beyonder.seq_number, path.ga_id)
         user.beyonder.study_points = 0
         await self.dao.flush()
         self.botlog.downseq(old_path.name, old_path.id, old_seq.number, old_seq.id, path.name, path.id, user.beyonder.seq.number, user.beyonder.seq.id)
@@ -233,3 +262,53 @@ class BeyonderLogic(BaseLogic):
                 page=self.pagination(page, per_page, count),
                 count=count,
             )
+
+    async def study_method_action(self, study_points: int):
+        user = await self.get_user(self.user_id)
+        if user.inventory is None:
+            user.inventory = InventoryDB() 
+            await self.dao.flush()
+        await user.inventory.awaitable_attrs.items
+        activity_points = user.inventory.items_by_sketch_tag.get(ACTIVITY_POINTS_TAG)
+        if activity_points is None or activity_points.quantity - study_points < 0:
+            raise HaveActivityPointsError()
+        paths = await self.dao.path.neighbor_paths(user.beyonder.seq.path.ga_id) if user.beyonder.seq_number == 0 else None
+        old_study_points = user.beyonder.study_points
+        required_study_points = max(0, user.beyonder.rsp(paths) - old_study_points)
+        if study_points > required_study_points:
+            raise MethodActionFullStudyError(study_points=required_study_points)
+        old_time = user.beyonder.next_upseq
+        old_activity_points = activity_points.quantity
+        old_precent_study = user.beyonder.precent_study_method_action(paths)
+        activity_points.quantity -= study_points
+        user.beyonder.study_points += study_points
+        user.beyonder.next_upseq = self._get_upseq_time(
+            user.beyonder.seq_number, 
+            paths,
+            user.beyonder.study_method_action(paths)
+            )
+        if activity_points.quantity <= 0:
+            user.inventory.items.remove(activity_points)
+        await self.dao.flush()
+        self.botlog.study_method_action(
+            user.beyonder.precent_study_method_action(paths) - old_precent_study,
+            study_points,
+            activity_points.quantity,
+            activity_points.sketch.emodzi
+            )
+        return AnswerStudyMethodAction(
+            user=await self.query_body(self.user_id),
+            purpose=await self.query_body(user.id),
+            points=Points(
+                study_method_action=user.beyonder.study_method_action(paths) - old_precent_study / 100,
+                study_points=Point(old=old_study_points, new=study_points),
+                activity_points=Point(old=old_activity_points, new=activity_points.quantity),
+                rsp=user.beyonder.rsp(paths)
+            ),
+            time=TimeRedact(
+            old_time=old_time,
+            new_time=user.beyonder.next_upseq,
+            seconds=int((old_time - user.beyonder.next_upseq).total_seconds()),
+            operator='-',
+            )
+        ).to_query(user)

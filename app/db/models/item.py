@@ -45,4 +45,10 @@ class InventoryDB(Base):
         cascade='all, delete-orphan',
     )
 
+    @property
+    def items_by_sketch_id(self):
+        return {i.sketch_id:i for i in self.items}
     
+    @property
+    def items_by_sketch_tag(self):
+        return {i.sketch.tag:i for i in self.items}

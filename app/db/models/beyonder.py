@@ -118,8 +118,15 @@ class BeyonderDB(Base):
     def study_points(self, points: int):
         self._study_points = points
         return self._study_points 
+
+    def math_study_method_action(self, study_points: int, paths: int | None = None):
+        return (Decimal(study_points) / Decimal(self.rsp(paths))).quantize(Decimal('0.0001'), ROUND_HALF_DOWN)
  
     def study_method_action(self, paths: int | None = None):
-        if self.seq_number > -1 or paths is None:
-            return (Decimal(10) / Decimal(self.seq.rsp)).quantize(Decimal('0.0001'), ROUND_HALF_DOWN)
-        return (Decimal(10) / Decimal(self.seq.rsp*paths)).quantize(Decimal('0.0001'), ROUND_HALF_DOWN)
+        return self.math_study_method_action(self.study_points, paths)
+
+    def precent_study_method_action(self, paths: int | None = None):
+        return self.study_method_action(paths) * 100
+
+    def rsp(self, paths: int | None = None):
+        return self.seq.rsp if self.seq_number > -1 or paths is None else self.seq.rsp*paths

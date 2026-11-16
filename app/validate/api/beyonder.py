@@ -15,17 +15,24 @@ class AnswerRedactSeq(AnswerBody):
     new: Sequence | None = None
     operation: Literal['up', 'down', 'add']
 
-class AnswerTimeReplace(AnswerBody):
+class TimeReplace(AnswerBaseBody):
     old_time: datetime
     new_time: datetime
 
-class AnswerTimeRedact(AnswerTimeReplace):
+class TimeRedact(TimeReplace):
     seconds: int
     operator: Literal['-', '+']
+
+class AnswerTimeReplace(AnswerBody, TimeReplace):
+    pass
+
+class AnswerTimeRedact(AnswerBody, TimeRedact):
+    pass
 
 
 class AnswerBeyonderInfo(AnswerBody):
     beyonder: BeyonderInfo | None = None
+    points: 'Points | None' = None
     for_buttons: ForButtons | None = None
 
     def to_query(self, data: UserDB):
@@ -51,3 +58,16 @@ class AnswerBeyonderList(AnswerBaseBody):
     beyonders: list[AnswerBeyonderInfo]
     page: Page | None = None
     count: int = 0
+
+class Point(AnswerBaseBody):
+    old: int | None = None
+    new: int
+
+class Points(AnswerBaseBody):
+    study_points: Point
+    activity_points: Point
+    rsp: int
+    study_method_action: float
+
+class AnswerStudyMethodAction(AnswerBeyonderInfo):
+    time: TimeRedact

@@ -1,5 +1,5 @@
 from .base import PermissionException, BaseException, BaseExceptionResponse, UserDontFind, DBError, RedisError
-from .beyonder import PathDontEnterException, SeqBusyException, UpseqNotComeException, DontBeyonderException, ALreadyBeyonderException, SeqDontExistException
+from .beyonder import PathDontEnterException, SeqBusyException, UpseqNotComeException, DontBeyonderException, ALreadyBeyonderException, SeqDontExistException, MethodActionFullStudyError, HaveActivityPointsError
 from .wiki import PathDontSearchException, PathDontEnterFilterException
 from .question import QuestionDontFindException, AnswerDontFindException
 from .item import ItemDontFindException, ItemQuantityException
@@ -47,6 +47,8 @@ exceptions: list[type[BaseException]] = [
     AnswerDontFindException,
     ItemDontFindException,
     ItemQuantityException,
+    MethodActionFullStudyError,
+    HaveActivityPointsError
 ]
 
 exception_codes = {e.status_code:e for e in exceptions}

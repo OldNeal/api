@@ -28,6 +28,14 @@ async def activity_points(
     ).get_activity_points(message_count)
 
 
+@activity_router.get('/points', response_model=AnswerActivityPoints)
+async def activity_points_count(
+    user_id: int = Query(description='ID пользователя'),
+    session=Depends(get_session()),
+):
+    return await ActivityService(session, user_id=user_id).get_activity_points_count()
+
+
 @activity_router.patch('/limit/reset', response_model=AnswerActivityPointsLimitReset)
 async def activity_points_limit_reset(
     query: QueryBody,

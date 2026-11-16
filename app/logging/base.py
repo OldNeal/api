@@ -173,7 +173,8 @@ class BotLog:
             self.logger.level("UPSEQ", no=22, color="<light-green>", icon="🔼"),
             self.logger.level("DOWNSEQ", no=23, color="<light-green>", icon="🔽"),
             self.logger.level("KILL", no=24, color="<light-green>", icon="☠️"),
-            self.logger.level("TIME", no=25, color="<light-green>", icon="⌛")
+            self.logger.level("TIME", no=25, color="<light-green>", icon="⌛"),
+            self.logger.level("STUDY METHOD ACTION", no=25, color="<light-green>", icon="⌛"),
             ]
 
     def create_levels_organ(self):
@@ -363,6 +364,10 @@ class BotLog:
             'DRINK', f'Изменено время продвижения: {old_time} >>> {new_time}', 
             **kwargs | {'old_time':old_time, 'new_time': new_time})
 
+    def study_method_action(self, precent_study: float, study_ponits: int, activity_points: int, activity_points_emodzi: str, **kwargs):
+        self.logger.log(
+            'STUDY METHOD ACTION', f'Вы изучили метод действия на {precent_study:.2f}% потратив {study_ponits} {activity_points_emodzi}', 
+            **kwargs | {'precent_study':precent_study, 'study_ponits':study_ponits, 'activity_points':activity_points})
 
 
     def organ_create(self, organ_name: str, organ_id: int, **kwargs):

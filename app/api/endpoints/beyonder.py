@@ -6,7 +6,8 @@ from app.validate.api.beyonder import (QueryBody,
                                        AnswerRedactSeq,
                                        AnswerBody,
                                        AnswerBeyonderInfo,
-                                       AnswerBeyonderList)
+                                       AnswerBeyonderList,
+                                       AnswerStudyMethodAction)
 from app.api.depends.session import get_session
 from app.service.beyonder import BeyonderService
 from datetime import datetime, timedelta
@@ -86,6 +87,14 @@ async def beyonder_kill(
                    session = Depends(get_session())
                    ):
     return await BeyonderService(session, query.user_id, user_id, query.is_admin).kill()
+
+@beyonder_router.post('/method_action/study', response_model=AnswerStudyMethodAction)
+async def beyonder_study_method_action(
+                   query: QueryBody,
+                   points: int = Query(ge=0, description='Кол-во очков активности для изучения'),
+                   session = Depends(get_session())
+                   ):
+    return await BeyonderService(session, query.user_id).study_method_action(points)
 
 @beyonder_router.get('/list', response_model=AnswerBeyonderList)
 async def beyonder_list(

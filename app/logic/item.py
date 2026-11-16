@@ -95,9 +95,8 @@ class ItemLogic(BaseLogic):
         if inventory is None:
             if not give:
                 raise ItemQuantityException(quantity=quantity, available=0)
-            inventory = InventoryDB(user_id=purpose.id)
+            inventory = InventoryDB()
             purpose.inventory = inventory
-            self.dao.session.add(inventory)
             await self.dao.flush()
 
         item = await self.dao.item.query_by_inventory_and_sketch(
@@ -153,9 +152,8 @@ class ItemLogic(BaseLogic):
         sketch = await self._activity_point_sketch()
         inventory = user.inventory
         if inventory is None and create:
-            inventory = InventoryDB(user_id=user.id)
+            inventory = InventoryDB()
             user.inventory = inventory
-            self.dao.session.add(inventory)
             await self.dao.flush()
         item = (
             await self.dao.item.query_by_inventory_and_sketch(inventory.id, sketch.id)
