@@ -18,8 +18,8 @@ class ActivityService(BaseService):
             is_admin=self.is_admin,
         )
 
-    async def get_activity_points(self, message_count: int = 1):
-        return await self.logic.get_activity_points(message_count)
+    async def get_activity_points_message(self, count: int = 1):
+        return await self.logic.get_activity_points_message(count)
 
     async def get_activity_points_count(self):
         return await self.logic.get_activity_points_count()

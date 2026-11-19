@@ -269,11 +269,11 @@ class BotLog:
             **kwargs | {'user_id': user_id, 'tg_id': tg_id},
         )
 
-    def get_activity_points(self, points: int, all_points: int, **kwargs):
+    def get_activity_points(self, points: int, all_points: int, reason: str | None = None, **kwargs):
         self.logger.log(
             'GET ACTIVITY POINTS',
-            f'Получены очки активости: {points}',
-            **kwargs | {'points': points, 'all_points': all_points},
+            f'Получены очки активости: {points}{f', причина: "{reason}"' if reason else ''}',
+            **kwargs | {'points': points, 'all_points': all_points, 'reason':reason},
         )
 
     def activity_points_add(self, admin_id: int, user_id: int, points: int, reason: str | None = None):
@@ -364,10 +364,10 @@ class BotLog:
             'DRINK', f'Изменено время продвижения: {old_time} >>> {new_time}', 
             **kwargs | {'old_time':old_time, 'new_time': new_time})
 
-    def study_method_action(self, precent_study: float, study_ponits: int, activity_points: int, activity_points_emodzi: str, **kwargs):
+    def study_method_action(self, precent_study: float, activity_points: int, all_activity_points: int, activity_points_emodzi: str, **kwargs):
         self.logger.log(
-            'STUDY METHOD ACTION', f'Вы изучили метод действия на {precent_study:.2f}% потратив {study_ponits} {activity_points_emodzi}', 
-            **kwargs | {'precent_study':precent_study, 'study_ponits':study_ponits, 'activity_points':activity_points})
+            'STUDY METHOD ACTION', f'Изучил метод действия на {precent_study:.2f}% потратив {activity_points} {activity_points_emodzi}', 
+            **kwargs | {'precent_study':precent_study, 'activity_points':activity_points, 'all_activity_points':all_activity_points})
 
 
     def organ_create(self, organ_name: str, organ_id: int, **kwargs):

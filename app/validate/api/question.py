@@ -23,7 +23,9 @@ class Question(QustionBase):
 
 class AnswerQuestionAnswer(AnswerBody):
     answer_id: int
+    is_correct: bool
     question: Question
+    activity_points: int = 0 
 
 class AnswerQuestion(AnswerBody):
     question: Question

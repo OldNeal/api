@@ -25,7 +25,7 @@ async def activity_points(
         session,
         user_id=query.user_id,
         is_admin=query.is_admin,
-    ).get_activity_points(message_count)
+    ).get_activity_points_message(message_count)
 
 
 @activity_router.get('/points', response_model=AnswerActivityPoints)

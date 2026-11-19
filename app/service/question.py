@@ -14,14 +14,20 @@ class QuestionService(BaseService):
     async def answer_the_question(self, question_id: int, answer_id: int):
         return await self.logic.answer_the_question(question_id, answer_id)
 
+    async def answer_the_question_incorrect(self, question_id: int):
+        return await self.logic.answer_the_question_incorrect(question_id)
+
+    async def answer_the_question_wrong(self, question_id: int):
+        return await self.logic.answer_the_question_incorrect(question_id)
+
     async def search(self, value: str, page: int | None = None, per_page: int = 5):
         return await self.logic.search(value, page, per_page)
 
     async def list(self, page: int | None = None, per_page: int = 5):
         return await self.logic.list(page, per_page)
 
-    async def random_question(self):
-        return await self.logic.random_question()
+    async def random_question(self, correct_count: int = 1, incorrect_count: int = 3):
+        return await self.logic.random_question(correct_count, incorrect_count)
 
     async def my_questions(self, page: int | None = None, per_page: int = 5):
         return await self.logic.my_questions(page, per_page)

@@ -16,7 +16,7 @@ from app.validate.api.beyonder import (AnswerTimeReplace,
                                        Point,
                                        Points)
 from app.logic.seq import sequences
-from app.logic.item import ACTIVITY_POINTS_TAG
+from app.logic.activity import ACTIVITY_POINTS_TAG
 from app.db.models.item import InventoryDB
 
 class BeyonderLogic(BaseLogic):

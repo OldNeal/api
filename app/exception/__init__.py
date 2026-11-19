@@ -1,7 +1,12 @@
 from .base import PermissionException, BaseException, BaseExceptionResponse, UserDontFind, DBError, RedisError
 from .beyonder import PathDontEnterException, SeqBusyException, UpseqNotComeException, DontBeyonderException, ALreadyBeyonderException, SeqDontExistException, MethodActionFullStudyError, HaveActivityPointsError
 from .wiki import PathDontSearchException, PathDontEnterFilterException
-from .question import QuestionDontFindException, AnswerDontFindException
+from .question import (
+    QuestionDontFindException,
+    AnswerDontFindException,
+    QuestionAlreadyAnsweredException,
+    QuestionDailyLimitException,
+)
 from .item import ItemDontFindException, ItemQuantityException
 from .organ import DontMemberError, ALreadyOwnerError, DontEnterPurposeError, ExistRankError, ExistOrganError, InOneOrganError, ALreadyMemberError, OrganPermissioError, OrganPermissionNewRankError, OrganPermissionPurposeRankError, ClosenOrganError, HiddenOrganError
 from .logs import DontLogFileException, DontHavePermissionException, DontExistCategoryException
@@ -45,6 +50,8 @@ exceptions: list[type[BaseException]] = [
     NewsPaperPermissioError,
     QuestionDontFindException,
     AnswerDontFindException,
+    QuestionAlreadyAnsweredException,
+    QuestionDailyLimitException,
     ItemDontFindException,
     ItemQuantityException,
     MethodActionFullStudyError,

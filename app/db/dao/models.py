@@ -664,6 +664,90 @@ class QuestionDAO(BaseDAO[QuestionDB]):
         result = await self.session.execute(query)
         return result.unique().scalars().first()
 
+    async def find_random_with_answer_counts(
+        self,
+        correct_count: int,
+        incorrect_count: int,
+        erudite_id: int,
+        answered_after: datetime,
+        incorrect_answered_after: datetime,
+    ):
+        correct_answers_query = (
+            select(func.count(AnswerQuestionDB.id))
+            .where(
+                AnswerQuestionDB.question_id == self.model.id,
+                AnswerQuestionDB.is_correct.is_(True),
+            )
+        )
+        recent_answer = (
+            select(ResultsQuestionDB.id)
+            .where(
+                ResultsQuestionDB.answer_id == AnswerQuestionDB.id,
+                ResultsQuestionDB.erudite_id == erudite_id,
+                ResultsQuestionDB.created_at >= answered_after,
+            )
+            .exists()
+        )
+        recent_incorrect_answer = (
+            select(ResultsQuestionDB.id)
+            .join(AnswerQuestionDB, ResultsQuestionDB.answer_id == AnswerQuestionDB.id)
+            .where(
+                AnswerQuestionDB.question_id == self.model.id,
+                AnswerQuestionDB.is_correct.is_(False),
+                ResultsQuestionDB.erudite_id == erudite_id,
+                ResultsQuestionDB.created_at >= incorrect_answered_after,
+            )
+            .correlate(self.model)
+            .exists()
+        )
+        correct_answers_count = (
+            correct_answers_query
+            .where(~recent_answer)
+            .correlate(self.model)
+            .scalar_subquery()
+        )
+        incorrect_answers_count = (
+            select(func.count(AnswerQuestionDB.id))
+            .where(
+                AnswerQuestionDB.question_id == self.model.id,
+                AnswerQuestionDB.is_correct.is_(False),
+            )
+            .correlate(self.model)
+            .scalar_subquery()
+        )
+        query = (
+            self._questions_query()
+            .where(
+                correct_answers_count >= correct_count,
+                incorrect_answers_count >= incorrect_count,
+                ~recent_incorrect_answer,
+            )
+            .order_by(None)
+            .order_by(func.random())
+            .limit(1)
+        )
+        result = await self.session.execute(query)
+        return result.unique().scalars().first()
+
+    async def recently_answered_correct_ids(
+        self,
+        erudite_id: int,
+        question_id: int,
+        answered_after: datetime,
+    ):
+        query = (
+            select(AnswerQuestionDB.id)
+            .join(ResultsQuestionDB, ResultsQuestionDB.answer_id == AnswerQuestionDB.id)
+            .where(
+                AnswerQuestionDB.question_id == question_id,
+                AnswerQuestionDB.is_correct.is_(True),
+                ResultsQuestionDB.erudite_id == erudite_id,
+                ResultsQuestionDB.created_at >= answered_after,
+            )
+        )
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+
     async def answer_statistics(self, question_id: int):
         query = (
             select(
@@ -685,6 +769,31 @@ class AnswerQuestionDAO(BaseDAO[AnswerQuestionDB]):
 
 class ResultsQuestionDAO(BaseDAO[ResultsQuestionDB]):
     model = ResultsQuestionDB
+
+    async def count_answered_today(self, erudite_id: int):
+        await self.session.scalar(
+            select(EruditeDB.id)
+            .where(EruditeDB.id == erudite_id)
+            .with_for_update()
+        )
+        query = (
+            select(func.count(self.model.id))
+            .where(
+                self.model.erudite_id == erudite_id,
+                func.date(self.model.created_at) == func.current_date(),
+            )
+        )
+        return await self.session.scalar(query) or 0
+
+    async def last_answered_at(self, erudite_id: int, answer_id: int):
+        query = (
+            select(func.max(self.model.created_at))
+            .where(
+                self.model.erudite_id == erudite_id,
+                self.model.answer_id == answer_id,
+            )
+        )
+        return await self.session.scalar(query)
 
     async def statistics_by_user(self, user_id: int):
         query = (

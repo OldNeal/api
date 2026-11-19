@@ -38,6 +38,18 @@ async def question_answer(
     )
 
 
+@question_router.post('/answer/incorrect', response_model=AnswerQuestionAnswer)
+@question_router.post('/answer/wrong', response_model=AnswerQuestionAnswer, include_in_schema=False)
+async def question_answer_incorrect(
+    query: QueryBody,
+    question_id: int = Query(description='ID вопроса'),
+    session=Depends(get_session()),
+):
+    return await QuestionService(session, user_id=query.user_id, is_admin=query.is_admin).answer_the_question_incorrect(
+        question_id,
+    )
+
+
 @question_router.post('/search', response_model=AnswerQuestionSearch, response_model_exclude_none=True)
 async def question_search(
     query: QueryBody,
@@ -61,9 +73,15 @@ async def question_list(
 @question_router.post('/random', response_model=AnswerRandomQuestion, response_model_exclude_none=True)
 async def question_random(
     query: QueryBody,
+    correct_count: int = Query(1, ge=1, description='Количество правильных ответов'),
+    incorrect_count: int = Query(3, ge=3, description='Количество неправильных ответов'),
     session=Depends(get_session()),
 ):
-    return await QuestionService(session, user_id=query.user_id, is_admin=query.is_admin).random_question()
+    return await QuestionService(
+        session,
+        user_id=query.user_id,
+        is_admin=query.is_admin,
+    ).random_question(correct_count, incorrect_count)
 
 
 @question_router.post('/my', response_model=AnswerAllQuestions, response_model_exclude_none=True)
