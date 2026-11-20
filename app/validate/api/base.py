@@ -120,3 +120,10 @@ class AnswerActivityPoints(ActivityPoints):
 
 class AnswerActivityPointsLimitReset(ActivityPoints):
     pass
+
+class AnswerActivityPointsLimit(AnswerBody):
+    used: int = 0
+    limit: int = 0
+    remaining: int = 0
+    ttl: int = 0
+    points_per_message: int = 0

@@ -10,7 +10,7 @@ class ItemSketchDB(Base):
     description: Mapped[str | None] = mapped_column(default=None)
     emodzi: Mapped[str | None] = mapped_column(default=None)
     custom_emodzi_id: Mapped[str | None] = mapped_column(default=None)
-    data: Mapped[dict] = mapped_column(JSON, default=dict)
+    data: Mapped[dict] = mapped_column(JSON, default={})
     items: Mapped[list['ItemDB']] = relationship(
         'ItemDB',
         uselist=True,
@@ -18,6 +18,15 @@ class ItemSketchDB(Base):
         back_populates='sketch',
         cascade='all, delete-orphan',
     )
+
+    @property
+    def all_counts_all_time(self) -> int:
+        return max(self.data.get('all_counts_all_time', 0), 0)
+
+    @all_counts_all_time.setter
+    def all_counts_all_time(self, value: str) -> int:
+        self.data = self.data | {'all_counts_all_time':value}
+        return value
 
 
 class ItemDB(Base):

@@ -1,5 +1,4 @@
 from app.exception.base import BaseException
-from config import MAX_DAILY_QUESTION_ANSWERS
 
 
 class QuestionDontFindException(BaseException):
@@ -19,7 +18,7 @@ class QuestionAlreadyAnsweredException(BaseException):
 
 class QuestionDailyLimitException(BaseException):
     default_message = (
-        f'Достигнут дневной лимит: можно ответить максимум на '
-        f'{MAX_DAILY_QUESTION_ANSWERS} вопросов в день'
+        f'Достигнут дневной лимит: можно взять максимум '
+        '{max_daily_question_answers} вопросов в день'
     )
     status_code = 429

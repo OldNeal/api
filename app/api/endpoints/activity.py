@@ -4,6 +4,7 @@ from app.exception import get_exception_codes
 from app.service.activity import ActivityService
 from app.validate.api.base import (
     AnswerActivityPoints,
+    AnswerActivityPointsLimit,
     AnswerActivityPointsLimitReset,
     QueryBody,
 )
@@ -34,6 +35,14 @@ async def activity_points_count(
     session=Depends(get_session()),
 ):
     return await ActivityService(session, user_id=user_id).get_activity_points_count()
+
+
+@activity_router.get('/limit', response_model=AnswerActivityPointsLimit)
+async def activity_points_limit(
+    user_id: int = Query(description='ID пользователя'),
+    session=Depends(get_session()),
+):
+    return await ActivityService(session, user_id=user_id).get_activity_points_limit()
 
 
 @activity_router.patch('/limit/reset', response_model=AnswerActivityPointsLimitReset)

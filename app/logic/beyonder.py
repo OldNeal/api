@@ -17,7 +17,6 @@ from app.validate.api.beyonder import (AnswerTimeReplace,
                                        Points)
 from app.logic.seq import sequences
 from app.logic.activity import ACTIVITY_POINTS_TAG
-from app.db.models.item import InventoryDB
 
 class BeyonderLogic(BaseLogic):
     async def get_upseq_time(self, seq: int, ga_id: int, study_method_action: float = 0.0):
@@ -40,26 +39,26 @@ class BeyonderLogic(BaseLogic):
         return seq
 
     async def info(self):
-        beyonder = await self.get_user()
-        user = self.return_query_body(beyonder)
-        answer = AnswerBeyonderInfo(user=user, purpose=user).to_query(beyonder)
-        if beyonder.beyonder is not None:
+        user = await self.get_user()
+        query_body = self.return_query_body(user)
+        answer = AnswerBeyonderInfo(user=query_body, purpose=query_body).to_query(user)
+        if user.beyonder is not None:
             activity_points = 0
-            if beyonder.inventory is not None:
-                await beyonder.inventory.awaitable_attrs.items
-                item = beyonder.inventory.items_by_sketch_tag.get(ACTIVITY_POINTS_TAG)
+            if user.inventory is not None:
+                await user.inventory.awaitable_attrs.items
+                item = user.inventory.items_by_sketch_tag.get(ACTIVITY_POINTS_TAG)
                 if item is not None:
                     activity_points = item.quantity
             paths = (
-                await self.dao.path.neighbor_paths(beyonder.beyonder.seq.path.ga_id)
-                if beyonder.beyonder.seq_number == 0
+                await self.dao.path.neighbor_paths(user.beyonder.seq.path.ga_id)
+                if user.beyonder.seq_number == 0
                 else None
             )
             answer.points = Points(
-                study_method_action=beyonder.beyonder.study_method_action(paths),
-                study_points=Point(new=beyonder.beyonder.study_points),
+                study_method_action=user.beyonder.study_method_action(paths),
+                study_points=Point(new=user.beyonder.study_points),
                 activity_points=Point(new=activity_points),
-                rsp=beyonder.beyonder.rsp(paths),
+                rsp=user.beyonder.rsp(paths),
             )
         return answer
 
@@ -265,9 +264,6 @@ class BeyonderLogic(BaseLogic):
 
     async def study_method_action(self, study_points: int):
         user = await self.get_user(self.user_id)
-        if user.inventory is None:
-            user.inventory = InventoryDB() 
-            await self.dao.flush()
         await user.inventory.awaitable_attrs.items
         activity_points = user.inventory.items_by_sketch_tag.get(ACTIVITY_POINTS_TAG)
         if activity_points is None or activity_points.quantity - study_points < 0:

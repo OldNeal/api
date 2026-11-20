@@ -1,7 +1,6 @@
 import random
 from datetime import datetime, timedelta
 
-from config import MAX_DAILY_QUESTION_ANSWERS
 from app.logic.activity import ActivityLogic
 from app.validate.api.question import (
     AnswerAllQuestions,
@@ -11,6 +10,7 @@ from app.validate.api.question import (
     AnswerQuestionStatistics,
     AnswerRandomQuestion,
     AnswerUserQuestionStatistics,
+    AnswerQuestionLimit,
     Question,
     QuestionAnswer,
     QuestionAnswerStatistics,
@@ -26,6 +26,8 @@ from app.exception.question import (
     QuestionDailyLimitException,
     QuestionDontFindException,
 )
+
+MAX_DAILY_QUESTION_ANSWERS = 20
 
 class QuestionLogic(ActivityLogic):
     async def check_erudite(self, user_id: int | None):
@@ -45,10 +47,19 @@ class QuestionLogic(ActivityLogic):
             raise QuestionDontFindException()
         return question
 
-    async def check_daily_question_limit(self, erudite_id: int):
-        answered_today = await self.dao.results_question.count_answered_today(erudite_id)
-        if answered_today >= MAX_DAILY_QUESTION_ANSWERS:
-            raise QuestionDailyLimitException()
+    async def check_daily_question_limit(self, user_id: int):
+        taken_today = await self.store.question.get_daily_taken_questions(user_id)
+        if taken_today >= MAX_DAILY_QUESTION_ANSWERS:
+            raise QuestionDailyLimitException(max_daily_question_answers=MAX_DAILY_QUESTION_ANSWERS)
+
+    async def get_daily_question_limit(self):
+        used, ttl = await self.store.question.get_daily_taken_questions_limit(self.user_id)
+        return AnswerQuestionLimit(
+            used=used,
+            limit=MAX_DAILY_QUESTION_ANSWERS,
+            remaining=max(0, MAX_DAILY_QUESTION_ANSWERS - used),
+            ttl=ttl,
+        )
 
     def question_body(
         self,
@@ -113,7 +124,6 @@ class QuestionLogic(ActivityLogic):
             )
             if last_answered_at and last_answered_at > datetime.now() - timedelta(days=14):
                 raise QuestionAlreadyAnsweredException()
-        await self.check_daily_question_limit(user.player.erudite.id)
         await user.player.erudite.awaitable_attrs.results
         user.player.erudite.results.append(ResultsQuestionDB(answer_id=answer_id))
         await self.dao.flush()
@@ -143,7 +153,6 @@ class QuestionLogic(ActivityLogic):
             raise AnswerDontFindException()
 
         user = await self.check_erudite(self.user_id)
-        await self.check_daily_question_limit(user.player.erudite.id)
         await user.player.erudite.awaitable_attrs.results
         user.player.erudite.results.append(ResultsQuestionDB(answer_id=answer.id))
         await self.dao.flush()
@@ -182,6 +191,7 @@ class QuestionLogic(ActivityLogic):
 
     async def random_question(self, correct_count: int = 1, incorrect_count: int = 3):
         user = await self.check_erudite(self.user_id)
+        await self.check_daily_question_limit(user.id)
         erudite_id = user.player.erudite.id
         now = datetime.now()
         answered_after = now - timedelta(days=14)
@@ -211,9 +221,12 @@ class QuestionLogic(ActivityLogic):
             incorrect_count,
         )
         random.shuffle(answers)
-        return AnswerRandomQuestion(
+        response = AnswerRandomQuestion(
             question=self.question_body(question, answers=answers),
         )
+        if not await self.store.question.take_question(user.id, MAX_DAILY_QUESTION_ANSWERS):
+            raise QuestionDailyLimitException(max_daily_question_answers=MAX_DAILY_QUESTION_ANSWERS)
+        return response
 
     async def my_questions(self, page: int | None = None, per_page: int = 5):
         if self.user_id is None:

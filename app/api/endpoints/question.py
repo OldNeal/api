@@ -11,6 +11,7 @@ from app.validate.api.question import (
     AnswerQuestionStatistics,
     AnswerRandomQuestion,
     AnswerUserQuestionStatistics,
+    AnswerQuestionLimit,
     QueryQuestionCreate,
 )
 
@@ -113,3 +114,11 @@ async def question_user_statistics(
         user_id=query.user_id,
         is_admin=query.is_admin,
     ).user_answer_statistics()
+
+
+@question_router.get('/limit', response_model=AnswerQuestionLimit)
+async def question_limit(
+    user_id: int = Query(description='ID пользователя'),
+    session=Depends(get_session()),
+):
+    return await QuestionService(session, user_id=user_id).get_daily_question_limit()

@@ -24,5 +24,8 @@ class ActivityService(BaseService):
     async def get_activity_points_count(self):
         return await self.logic.get_activity_points_count()
 
+    async def get_activity_points_limit(self):
+        return await self.logic.get_activity_points_limit()
+
     async def reset_activity_points_limit(self, purpose_user_id: int):
         return await self.logic.reset_activity_points_limit(purpose_user_id)

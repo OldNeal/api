@@ -57,3 +57,9 @@ class UserQuestionStatistics(BaseAPIValidate):
 
 class AnswerUserQuestionStatistics(AnswerBody):
     statistics: UserQuestionStatistics
+
+class AnswerQuestionLimit(AnswerBaseBody):
+    used: int = 0
+    limit: int = 0
+    remaining: int = 0
+    ttl: int = 0

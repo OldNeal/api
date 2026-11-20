@@ -1,7 +1,7 @@
 from app.db.models.item import InventoryDB, ItemDB, ItemSketchDB
 from app.exception.item import ItemDontFindException, ItemQuantityException
 from config import settings
-from app.validate.api.base import AnswerActivityPoints
+from app.validate.api.base import AnswerActivityPoints, AnswerActivityPointsLimit
 from app.logic.item import ItemLogic
 
 ACTIVITY_POINTS_TAG = 'activity_point'
@@ -53,6 +53,7 @@ class ActivityLogic(ItemLogic):
             self.dao.session.add(item)
         else:
             item.quantity += points
+        sketch.all_counts_all_time += points
         return item
 
     async def get_activity_points_message(self, count: int = 1):
@@ -91,3 +92,17 @@ class ActivityLogic(ItemLogic):
     async def get_activity_points_count(self):
         user = await self.get_user(self.user_id)
         return await self._activity_points_answer(user, user)
+
+    async def get_activity_points_limit(self):
+        user = await self.get_user(self.user_id)
+        used, ttl = await self.store.activity.get_activity_points_limit(self.user_id)
+        limit = GET_ACTIVITY_POINTS_LIMIT_MESSAGE
+        return AnswerActivityPointsLimit(
+            user=self.return_query_body(user),
+            purpose=self.return_query_body(user),
+            used=used,
+            limit=limit,
+            remaining=max(0, limit - used),
+            ttl=GET_ACTIVITY_POINTS_LIMIT_TTL_MESSAGE,
+            points_per_message=ACTIVITY_POINTS_MESSAGE * settings.activity_points_factor,
+        )

@@ -770,21 +770,6 @@ class AnswerQuestionDAO(BaseDAO[AnswerQuestionDB]):
 class ResultsQuestionDAO(BaseDAO[ResultsQuestionDB]):
     model = ResultsQuestionDB
 
-    async def count_answered_today(self, erudite_id: int):
-        await self.session.scalar(
-            select(EruditeDB.id)
-            .where(EruditeDB.id == erudite_id)
-            .with_for_update()
-        )
-        query = (
-            select(func.count(self.model.id))
-            .where(
-                self.model.erudite_id == erudite_id,
-                func.date(self.model.created_at) == func.current_date(),
-            )
-        )
-        return await self.session.scalar(query) or 0
-
     async def last_answered_at(self, erudite_id: int, answer_id: int):
         query = (
             select(func.max(self.model.created_at))

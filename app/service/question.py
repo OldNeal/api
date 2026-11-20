@@ -37,3 +37,6 @@ class QuestionService(BaseService):
 
     async def user_answer_statistics(self):
         return await self.logic.user_answer_statistics()
+
+    async def get_daily_question_limit(self):
+        return await self.logic.get_daily_question_limit()
